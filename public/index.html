@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#100819">
+<title>VelvetPlay 18+</title>
+<style>
+:root{--bg:#100819;--panel:#21122c;--pink:#ff4da6;--purple:#a56aff;--green:#16b85b;--red:#e6383f;--muted:#b9a9c5;--navy:#191a30;--orange:#ff9800}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif}
+body{background:var(--bg);color:#fff;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit}button{cursor:pointer}
+.app{max-width:480px;min-height:100vh;margin:auto;padding-bottom:83px;background:linear-gradient(180deg,#190d23,#100819)}
+header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 13px;background:#150a20f5;backdrop-filter:blur(15px);border-bottom:1px solid #ffffff12}
+.brand{font-size:22px;font-weight:900;letter-spacing:-1px;white-space:nowrap}.brand span{color:var(--pink)}
+.header-right{display:flex;align-items:center;gap:7px}
+.balance{background:#2c1939;border:1px solid #57366b;border-radius:22px;padding:9px 10px;font-size:12px;white-space:nowrap}.balance b{color:#ffd1eb}
+.btn{border:0;border-radius:12px;padding:11px 13px;color:white;font-weight:800}.primary{background:linear-gradient(120deg,#ff4da6,#a45bff)}.secondary{background:#352141;border:1px solid #634176}
+.page{display:none;padding:15px}.page.active{display:block}
+.hero{padding:19px 16px;border-radius:21px;background:linear-gradient(135deg,#45194d,#25112f 60%,#4a1742);border:1px solid #ffffff12;margin-bottom:17px}
+.hero h1{font-size:25px;line-height:1.2;margin:0 0 8px}.hero p{font-size:13px;line-height:1.5;color:#e5d5ed;margin:0}
+.search{width:100%;background:#1c1025;border:1px solid #493355;border-radius:13px;padding:13px;color:#fff;outline:none;margin-bottom:13px}
+.search:focus{border-color:var(--pink)}
+.heading{display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px;gap:8px}.heading h2{font-size:18px;margin:0}.muted{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.creator-card{position:relative;overflow:hidden;border-radius:17px;background:#24142e;border:1px solid #ffffff12;min-width:0;box-shadow:0 7px 18px #0004;isolation:isolate}
+.creator-photo{width:100%;height:245px;object-fit:cover;display:block;background:linear-gradient(140deg,#43234f,#1b1027)}
+.creator-card:after{content:"";position:absolute;inset:65px 0 0;z-index:1;background:linear-gradient(transparent,#08050be8);pointer-events:none}
+.live{position:absolute;top:9px;left:9px;z-index:2;display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:20px;background:#100b16d9;font-size:10px;font-weight:900}
+.dot{width:8px;height:8px;display:inline-block;border-radius:50%;flex-shrink:0}.online{background:#31df89;box-shadow:0 0 8px #31df8999}.offline{background:#92909a}
+.age{position:absolute;top:9px;right:9px;z-index:2;background:#0c0813d9;padding:6px 8px;border-radius:20px;font-size:10px}
+.card-info{position:absolute;z-index:2;bottom:0;left:0;right:0;padding:11px 9px}.creator-name{font-weight:900;font-size:14px;line-height:1.3;overflow-wrap:anywhere;padding-right:35px}
+.creator-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:#e4d6ed}
+.camera{position:absolute;z-index:3;right:10px;bottom:13px;width:58px;height:58px;border:0;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 14px #0005;padding:0}
+.camera svg{width:34px;height:34px;fill:#68409a}.camera:active{transform:scale(.94)}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:12;width:100%;max-width:480px;display:grid;grid-template-columns:repeat(3,1fr);padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#170d21f5;backdrop-filter:blur(18px);border-top:1px solid #ffffff16}
+.nav-btn{border:0;background:transparent;color:#a997b8;padding:7px 3px;border-radius:12px;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px;flex-direction:column}
+.nav-icon{font-size:21px}.nav-btn.active{color:#ff72b8;background:#3a1b45}
+.panel{padding:16px;border-radius:17px;background:var(--panel);border:1px solid #ffffff10;margin-bottom:13px}.panel h3{font-size:16px;margin:0 0 9px}.panel p{font-size:13px;line-height:1.5;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:15px;border-radius:15px;background:#251432;border:1px solid #ffffff0d}.stat small{color:var(--muted);font-size:12px}.stat strong{display:block;font-size:22px;margin-top:7px}
+.profile-top{display:flex;align-items:center;gap:14px}.message{font-size:13px;line-height:1.5;margin:12px 0}.error{color:#ff9ab1}.good{color:#7ef0b5}
+.notice{background:#30203a;border-radius:12px;padding:12px;color:#d8c6e3;font-size:12px;line-height:1.5;margin-top:12px}
+.footer{text-align:center;color:#766880;font-size:10px;padding:20px 10px}.empty{grid-column:1/-1;text-align:center;padding:35px 15px;color:var(--muted);background:#1c1027;border-radius:17px}
+
+/* Incoming call screen */
+.call-screen{position:fixed;inset:0;z-index:50;display:none;overflow:hidden;background:#17151a;color:white}.call-screen.show{display:block;animation:callFade .28s ease-out}
+@keyframes callFade{from{opacity:0}to{opacity:1}}
+.call-backdrop{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(21px) brightness(.35);transform:scale(1.08)}
+.call-shade{position:absolute;inset:0;background:linear-gradient(180deg,#08080a35,#11111635 52%,#09090b65)}
+.call-close{position:absolute;top:calc(12px + env(safe-area-inset-top));right:15px;z-index:5;width:38px;height:38px;border:1px solid #ffffff22;border-radius:50%;background:#ffffff20;color:white;font-size:22px}
+.call-content{position:relative;z-index:2;height:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;padding:calc(38px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom))}
+.call-top{font-size:12px;letter-spacing:2px;color:#ffffffb5;font-weight:700}
+.call-middle{position:absolute;top:18%;left:0;right:0;padding:0 15px}
+.avatar-wrap{position:relative;width:142px;height:142px;margin:0 auto 57px}
+.call-avatar{position:relative;z-index:2;width:142px;height:142px;object-fit:cover;border:3px solid #72509f;border-radius:50%;box-shadow:0 0 18px #6c429c40}
+.avatar-wrap:before,.avatar-wrap:after{content:"";position:absolute;inset:-15px;border:2px solid #7650a377;border-radius:50%;animation:avatarPulse 2.5s ease-out infinite}
+.avatar-wrap:after{animation-delay:1.25s}
+@keyframes avatarPulse{0%{transform:scale(.83);opacity:.8}70%{opacity:.35}100%{transform:scale(1.65);opacity:0}}
+.call-name{font-size:31px;font-weight:400;letter-spacing:.1px;margin:0 0 19px;color:#fff}.call-label{font-size:15px;letter-spacing:1.4px;color:#c5c1c8}
+.ringing{color:#a886ff;font-size:16px;letter-spacing:1px;margin-top:46px;display:flex;align-items:center;justify-content:center;gap:10px}
+.ringing-dot{width:12px;height:12px;border-radius:50%;background:#a886ff;display:inline-block;animation:dotBreath 1.35s ease-in-out infinite}
+@keyframes dotBreath{0%,100%{transform:scale(.78);opacity:.55}50%{transform:scale(1.18);opacity:1}}
+.call-bottom{position:absolute;bottom:calc(34px + env(safe-area-inset-bottom));left:0;right:0}
+.call-actions{display:flex;justify-content:center;gap:clamp(75px,23vw,130px);margin:0 0 25px}
+.call-action-wrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+.call-action{width:clamp(120px,20vw,165px);height:clamp(120px,20vw,165px);border:0;border-radius:50%;color:#fff;font-size:0;display:grid;place-items:center;box-shadow:0 12px 32px #0003;animation:buttonBreath 1.8s ease-in-out infinite}
+.call-action svg{width:55px;height:55px;fill:none;stroke:white;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.call-action.decline{background:#e6383f;animation-delay:.2s}.call-action.answer{background:#16a34a;animation-delay:.85s}
+@keyframes buttonBreath{0%,100%{transform:scale(1);box-shadow:0 8px 25px #0002}50%{transform:scale(1.055);box-shadow:0 12px 36px #0004}}
+.call-action-label{font-size:16px;font-weight:400;color:#bdbbc0}.swipe-text{font-size:15px;letter-spacing:1.4px;color:#ffffff55;font-weight:400;margin-top:68px}
+
+/* Creator video area */
+.call-video-area{display:none;position:absolute;inset:0;z-index:4;background:#000}
+.call-video-area.show{display:block}
+.creator-video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+.video-status{position:absolute;left:12px;right:12px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:6;background:#100b16e6;border:1px solid #ffffff22;border-radius:14px;padding:11px 13px;font-size:13px;line-height:1.45;color:#f2e7f8;text-align:center}
+.video-status.error{color:#ffb3c1}
+.video-top{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.video-creator{background:#100b16d9;border:1px solid #ffffff22;border-radius:22px;padding:9px 12px;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+.video-minutes{background:#100b16d9;border:1px solid #57366b;border-radius:22px;padding:9px 11px;font-size:12px;white-space:nowrap}
+.video-minutes b{color:#ffd1eb}
+.video-buy{border:0;border-radius:22px;padding:9px 11px;font-size:12px;font-weight:800;background:linear-gradient(120deg,#ff4da6,#a45bff);color:#fff}
+
+/* Free promotional video */
+.promo-screen{position:fixed;inset:0;z-index:70;display:none;background:#000;color:#fff}
+.promo-screen.show{display:block}
+.promo-video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+.promo-top{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.promo-badge{background:#100b16d9;border:1px solid #ffffff22;border-radius:22px;padding:9px 12px;font-size:12px;font-weight:800}
+.promo-close{width:38px;height:38px;border:1px solid #ffffff22;border-radius:50%;background:#ffffff20;color:white;font-size:22px}
+.promo-note{position:absolute;left:12px;right:12px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:3;background:#100b16e6;border:1px solid #ffffff22;border-radius:14px;padding:11px 13px;font-size:12px;line-height:1.45;color:#f2e7f8;text-align:center}
+
+/* Existing package cards */
+#page-packages{background:#fff;color:#171717;min-height:calc(100vh - 65px);padding:0 0 30px;border-radius:28px 28px 0 0}
+.packages-head{position:relative;background:#fff;color:#111;padding:32px 20px 25px;border-radius:28px 28px 0 0}
+.sheet-handle{width:82px;height:8px;border-radius:20px;background:#d0d0d0;margin:0 auto 53px}
+.packages-title{font-size:30px;font-weight:800;text-align:center;margin:0 0 22px}
+.packages-subtitle{font-size:17px;text-align:center;color:#898989;margin:0 0 34px}
+.sheet-close{position:absolute;right:17px;top:90px;width:48px;height:48px;border:0;border-radius:50%;background:#ededed;color:#555;font-size:26px}
+.package-divider{height:1px;background:#e6e6e6;margin:0 0 22px}
+.package-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0 12px}
+.package-card{min-width:0;overflow:hidden;position:relative;border:2px solid #292929;border-radius:28px;background:#191a30;color:#fff;text-align:center;box-shadow:0 8px 18px #00012;display:flex;flex-direction:column}
+.package-top{height:220px;position:relative;display:flex;flex-direction:column;align-items:center;padding:35px 4px 16px}
+.package-camera{width:83px;height:83px;border-radius:50%;border:3px solid #70552e;background:#332a2b;display:grid;place-items:center;color:#ffd600;margin-bottom:38px}
+.package-camera svg{width:39px;height:39px;fill:#ffd600}
+.package-minutes{font-size:clamp(15px,4vw,23px);font-weight:800;white-space:nowrap}
+.hot-badge{position:absolute;top:24px;right:-2px;z-index:2;background:linear-gradient(135deg,#ff3e6d,#ed2160);color:white;border-radius:28px;padding:13px 12px;font-size:clamp(10px,3vw,15px);font-weight:900;letter-spacing:.5px;box-shadow:0 4px 14px #ff235955;white-space:nowrap}
+.package-price{background:linear-gradient(110deg,#ffad23,#ff9100);color:#171717;padding:22px 2px 20px;min-height:132px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.package-ksh{font-size:clamp(14px,3.7vw,22px);font-weight:800;white-space:nowrap}
+.package-usd{font-size:clamp(12px,3vw,17px);color:#80521d;white-space:nowrap}
+.package-buy{border:0;border-radius:0;background:transparent;color:inherit;font-size:inherit;font-weight:inherit;padding:0;width:100%;text-align:inherit}
+.package-buy:active .package-price{filter:brightness(.94)}
+#page-packages .payment-note{margin:18px 13px 0;color:#6e6e6e;font-size:12px;line-height:1.5}
+#page-packages .message{margin:12px 13px;color:#333}
+#page-packages .back-packages{margin:20px 13px 0;width:calc(100% - 26px);border:0;border-radius:12px;background:#191a30;color:#fff;padding:13px}
+
+/* New checkout screens, styled to match your screenshots */
+.pay-page{display:none;position:fixed;inset:0;z-index:40;overflow-y:auto;background:radial-gradient(ellipse at top right,#10251d 0%,transparent 42%),#0b0b10;color:#f6f3fa;padding:0 24px calc(25px + env(safe-area-inset-bottom));}
+.pay-page.show{display:block}
+.pay-head{height:91px;display:flex;align-items:center;justify-content:center;position:relative;font-size:29px;font-weight:800;letter-spacing:-.5px}
+.pay-back{position:absolute;left:0;top:7px;width:65px;height:77px;border:1px solid #ffffff16;border-radius:23px;background:#1b1b20;color:#fff;font-size:34px}
+.pay-card{background:#151519;border:2px solid #25252b;border-radius:35px;padding:30px 26px;margin-top:48px}
+.pay-label{text-align:center;color:#696970;font-size:18px;letter-spacing:3px;margin-bottom:40px}
+.minutes-pill{border:2px solid #33244d;border-radius:30px;background:#201a2b;min-height:112px;display:flex;align-items:center;justify-content:center;gap:20px;font-size:clamp(25px,6vw,42px);font-weight:900;white-space:nowrap}
+.minutes-pill svg{width:37px;height:37px;fill:#f5efff;flex-shrink:0}
+.method-title{text-align:center;color:#a5a3aa;font-size:21px;margin-bottom:45px}
+.method{width:100%;min-height:130px;border:3px solid #2c2c31;border-radius:32px;background:#1e1e23;color:#ddd;display:flex;align-items:center;justify-content:space-between;padding:18px 28px;margin:0 0 23px;font-size:25px}
+.method.selected{border-color:#17663d;background:#11251d;color:#20c56b}
+.method-logo{font-weight:900;font-size:23px;letter-spacing:-1px}.mpesa-logo{color:#29bd66}.paypal-logo{color:#ffdc22;font-size:32px;font-style:italic}
+.radio{width:48px;height:48px;border:3px solid #48484f;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+.method.selected .radio{border-color:#20c56b}.method.selected .radio:after{content:"";width:20px;height:20px;border-radius:50%;background:#20c56b}
+.pay-bottom{margin-top:50px}
+.total-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px;color:#777780;font-size:18px}
+.total-price{font-size:clamp(27px,7vw,43px);font-weight:900;white-space:nowrap;color:#f8f6fb}
+.green-button{width:100%;min-height:94px;border:0;border-radius:30px;background:linear-gradient(110deg,#20c75e,#0fa34b);color:white;font-size:27px;font-weight:500}
+.amount-due{text-align:center;color:#66666e;letter-spacing:4px;font-size:18px;margin-top:70px}
+.amount-big{text-align:center;font-size:clamp(43px,10vw,70px);font-weight:900;letter-spacing:-2px;white-space:nowrap;margin:18px 0 45px}
+.phone-box{border:2px solid #303036;background:#202025;border-radius:31px;padding:28px;margin-bottom:0}
+.phone-input-wrap{display:flex;align-items:center;gap:10px;min-height:95px;background:#202025;border:2px solid #34343a;border-radius:31px;padding:0 22px}
+.phone-prefix{font-size:23px;color:#ccc;white-space:nowrap}
+.phone-input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font-size:20px}
+.phone-input::placeholder{color:#686870}
+.format-note{text-align:center;color:#66666e;font-size:17px;margin:40px 0}
+.auth-card{margin-top:48px;padding:30px 26px;border-radius:34px;border:2px solid #26252d;background:#151419}
+.auth-step{display:flex;align-items:flex-start;gap:25px;padding:25px 0;border-bottom:1px solid #302e36;color:#a4a1aa;font-size:clamp(17px,4.5vw,24px);line-height:1.65;text-align:center}
+.auth-step:first-child{padding-top:10px}.auth-step:last-of-type{border-bottom:0}
+.auth-dot{width:18px;height:18px;min-width:18px;border-radius:50%;background:#9560ff;box-shadow:0 0 12px #9560ff55;margin-top:11px}
+.auth-step b{color:#f4f1fa;font-weight:500}
+.auth-card .green-button{margin-top:28px}
+.small-note{text-align:center;color:#777780;font-size:12px;line-height:1.6;margin-top:18px}
+.pay-message{font-size:14px;line-height:1.6;text-align:center;margin:16px 0;color:#ddd}
+@media(max-width:370px){
+ .creator-photo{height:215px}.package-grid{gap:8px;padding:0 8px}.package-top{height:190px;padding-top:31px}.package-camera{width:67px;height:67px;margin-bottom:32px}.package-camera svg{width:32px;height:32px}.package-price{min-height:110px;gap:16px}
+ .call-middle{top:17%}.avatar-wrap{margin-bottom:43px}.call-name{font-size:28px}.call-actions{gap:55px}.call-action{width:112px;height:112px}.call-action svg{width:45px;height:45px}.call-action-wrap{gap:19px}.swipe-text{margin-top:47px}
+ .pay-page{padding-left:18px;padding-right:18px}.pay-card,.auth-card{padding:23px 17px}.method{padding:15px 16px;font-size:21px}.minutes-pill{gap:10px;font-size:25px}.total-row{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand">Velvet<span>Play</span> <small style="font-size:10px;color:#d7c5e0">18+</small></div>
+ <div class="header-right">
+  <div class="balance">⏱ <b id="minutesHeader">0 min</b></div>
+  <button class="btn primary" style="padding:10px 11px;font-size:12px" onclick="showPage('packages')">Get minutes</button>
+ </div>
+</header>
+<main>
+<section id="page-videos" class="page active">
+ <div class="hero"><h1>Meet your creators ✨</h1><p>Discover profiles and connect with your favourite creators.</p></div>
+ <input id="creatorSearch" class="search" type="search" placeholder="Search creators..." oninput="renderCreators()">
+ <div class="heading"><h2>Creators</h2><span class="muted" id="creatorCount">21 creators</span></div>
+ <div id="creatorGrid" class="grid"></div>
+</section>
+<section id="page-calls" class="page">
+ <div class="hero"><h1>Calls</h1><p>Choose a creator to call.</p></div><div id="callCreatorGrid" class="grid"></div>
+</section>
+<section id="page-profile" class="page">
+ <div class="hero"><h1>Your profile</h1><p>Manage your account and minutes.</p></div>
+ <div class="panel"><div class="profile-top"><div style="font-size:38px">👤</div><div style="flex:1"><h3 id="profileName" style="margin:0 0 5px">Guest Member</h3><div class="muted">VelvetPlay member</div></div><button class="btn secondary" style="font-size:12px" onclick="editName()">Edit</button></div></div>
+ <div class="stats"><div class="stat"><small>Minutes balance</small><strong id="minutesProfile">0</strong></div><div class="stat"><small>Creators</small><strong>21</strong></div></div>
+ <div class="panel" style="margin-top:13px"><h3>Minutes</h3><p>Choose a package to add minutes to your account.</p><button class="btn primary" style="width:100%" onclick="showPage('packages')">Get minutes</button></div>
+ <div class="panel"><h3>Recent activity</h3><div id="activityList" class="muted">No recent activity.</div></div>
+</section>
+<section id="page-packages" class="page">
+ <div class="packages-head"><div class="sheet-handle"></div><h1 class="packages-title">Buy Minutes</h1><p class="packages-subtitle">Choose a plan that works for you</p><button class="sheet-close" onclick="showPage('videos')" aria-label="Close packages">×</button><div class="package-divider"></div></div>
+ <div id="packageGrid" class="package-grid"></div><div id="paymentMessage" class="message"></div>
+ <div class="payment-note">Your minutes are credited after the payment is confirmed.</div><button class="back-packages" onclick="showPage('videos')">Back to creators</button>
+</section>
+</main>
+<div class="footer">VelvetPlay 18+ · All rights reserved</div>
+<nav class="bottom-nav">
+ <button class="nav-btn active" id="nav-videos" onclick="showPage('videos')"><span class="nav-icon">▦</span>Videos</button>
+ <button class="nav-btn" id="nav-calls" onclick="showCallsPage()"><span class="nav-icon">☎</span>Calls</button>
+ <button class="nav-btn" id="nav-profile" onclick="showPage('profile')"><span class="nav-icon">♙</span>Profile</button>
+</nav>
+</div>
+
+<!-- Incoming call screen -->
+<div id="callScreen" class="call-screen" role="dialog" aria-modal="true" aria-label="Incoming video call">
+ <img id="callBackdrop" class="call-backdrop" alt=""><div class="call-shade"></div>
+ <button class="call-close" onclick="closeCall()" aria-label="Close">×</button>
+ <div class="call-content"><div class="call-top"></div><div class="call-middle">
+ <div class="avatar-wrap"><img id="callAvatar" class="call-avatar" alt="Caller"></div><div id="callName" class="call-name">Creator</div><div class="call-label">INCOMING VIDEO CALL</div>
+ <div class="ringing"><span class="ringing-dot"></span><span>Ringing...</span></div></div>
+ <div class="call-bottom"><div class="call-actions">
+ <div class="call-action-wrap"><button class="call-action decline" onclick="finishCall('declined')" aria-label="Decline call"><svg viewBox="0 0 64 64"><path d="M8 37c13-12 35-12 48 0l-7 12c-2 3-5 4-8 2l-7-5c-2-1-3-1-5 0l-7 5c-3 2-6 1-8-2L8 37Z"/></svg></button><div class="call-action-label">Decline</div></div>
+ <div class="call-action-wrap"><button class="call-action answer" onclick="finishCall('answered')" aria-label="Answer call"><svg viewBox="0 0 64 64"><path d="M13 7 25 6l5 14-8 6c4 8 9 13 17 17l6-8 14 5-1 12c0 4-4 6-8 5C28 51 13 36 7 15 6 11 9 8 13 7Z"/></svg></button><div class="call-action-label">Answer</div></div>
+ </div><div class="swipe-text">SWIPE UP TO MESSAGE</div></div></div>
+
+ <div id="callVideoArea" class="call-video-area">
+  <video id="creatorVideo" class="creator-video" playsinline preload="metadata" controls></video>
+  <div class="video-top">
+   <div id="videoCreatorName" class="video-creator">Creator</div>
+   <div class="video-minutes">⏱ <b id="videoMinutes">0 min</b></div>
+   <button class="video-buy" onclick="stopCreatorVideoAndBuy()">Buy Minutes</button>
+  </div>
+  <div id="videoStatus" class="video-status"></div>
+ </div>
+</div>
+
+<!-- Free promotional video -->
+<div id="promoScreen" class="promo-screen" role="dialog" aria-modal="true" aria-label="Free promotional video">
+ <video id="freePromoVideo" class="promo-video" playsinline preload="metadata" controls></video>
+ <div class="promo-top">
+  <div class="promo-badge">VelvetPlay · Free preview</div>
+  <button class="promo-close" onclick="closePromoVideo()" aria-label="Close promotional video">×</button>
+ </div>
+ <div class="promo-note">This free preview does not use your purchased minutes.</div>
+</div>
+
+<!-- Checkout -->
+<div id="checkoutScreen" class="pay-page">
+ <div class="pay-head"><button class="pay-back" onclick="backFromCheckout()" aria-label="Back">←</button>Checkout</div>
+ <div class="pay-card">
+  <div class="pay-label">YOU WILL GET</div>
+  <div class="minutes-pill"><svg viewBox="0 0 48 48"><path d="M7 13a5 5 0 0 1 5-5h16a5 5 0 0 1 5 5v2l8-6c2-1 4 0 4 3v21c0 3-2 4-4 2l-8-6v2a5 5 0 0 1-5 5H12a5 5 0 0 1-5-5z"/></svg><span id="checkoutMinutes">35 Minutes</span></div>
+ </div>
+ <div class="pay-card">
+  <div class="method-title">Payment method</div>
+  <button id="methodMpesa" class="method selected" onclick="selectMethod('mpesa')"><span class="method-logo mpesa-logo">M-PESA</span><span>M-Pesa</span><span class="radio"></span></button>
+  <button id="methodPaypal" class="method" onclick="selectMethod('paypal')"><span class="method-logo paypal-logo">ℙ</span><span>PayPal</span><span class="radio"></span></button>
+ </div>
+ <div class="pay-bottom"><div class="total-row"><span>Total price</span><strong class="total-price" id="checkoutPrice">Ksh 100.00</strong></div><button class="green-button" onclick="proceedCheckout()">Proceed</button><div id="checkoutMessage" class="pay-message"></div></div>
+</div>
+
+<!-- Enter phone number -->
+<div id="paymentScreen" class="pay-page">
+ <div class="pay-head"><button class="pay-back" onclick="showPayScreen('checkoutScreen')" aria-label="Back">←</button>Payment</div>
+ <div class="amount-due">AMOUNT DUE</div><div class="amount-big" id="paymentAmount">Ksh 100.00</div>
+ <div class="phone-box">
+  <div class="phone-input-wrap"><span class="phone-prefix">🇰🇪 +254</span><input id="phoneNumber" class="phone-input" type="tel" inputmode="numeric" maxlength="13" placeholder="M-Pesa number" autocomplete="tel" aria-label="M-Pesa phone number"></div>
+  <div class="format-note">Format: 7XXXXXXXX or 1XXXXXXXX</div>
+  <button class="green-button" onclick="goToAuthorization()">Pay Now</button>
+  <div id="phoneMessage" class="pay-message"></div>
+ </div>
+</div>
+
+<!-- Authorize payment -->
+<div id="authorizeScreen" class="pay-page">
+ <div class="pay-head"><button class="pay-back" onclick="showPayScreen('paymentScreen')" aria-label="Back">←</button><span style="font-size:clamp(19px,5vw,28px)">Authorize Payment</span></div>
+ <div class="auth-card">
+  <div class="auth-step"><span class="auth-dot"></span><span>You will receive an M-Pesa prompt from <b>Meshack Kirwa</b> of <b id="authAmount">KES 100</b></span></div>
+  <div class="auth-step"><span class="auth-dot"></span><span>Ensure your phone <b id="authPhone">2547XXXXXXXX</b> is active and reachable</span></div>
+  <div class="auth-step"><span class="auth-dot"></span><span>Enter your M-Pesa PIN to authorize payment</span></div>
+  <div class="auth-step"><span class="auth-dot"></span><span>Wait a few seconds while we confirm your transaction</span></div>
+  <div class="auth-step"><span class="auth-dot"></span><span>Do not close this screen until payment is complete</span></div>
+  <button class="green-button" id="sendPromptButton" onclick="sendStkPrompt()">Send Prompt</button>
+  <div id="authMessage" class="pay-message"></div>
+  <div class="small-note">Never share your M-Pesa PIN with anyone. Enter it only on the official Safaricom prompt on your phone.</div>
+ </div>
+</div>
+
+<script>
+"use strict";
+
+function driveImage(id){return "https://drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w900";}
+
+const creators=[
+{name:"🤪 Emmah",age:20,country:"Kenya",flag:"🇰🇪",online:true,image:"1_jivIbRd4uxUfYGCKyBAG7lIYvmXzfS0"},
+{name:"😍 Moraa",age:30,country:"Kenya",flag:"🇰🇪",online:true,image:"1mLlqhH7D8oCzRBS3QZhGQL-T6s54Oflm"},
+{name:"😚 Farida",age:18,country:"Kenya",flag:"🇰🇪",online:false,image:"1QtRBLCPEkDg6QNUwoOlUbBiAr3hcFoLh"},
+{name:"😍 Makena",age:25,country:"Kenya",flag:"🇰🇪",online:true,image:"1J_2-xfYQuj7XU2hmJDIFdvJMvHbLB7ho"},
+{name:"💦 Joi",age:21,country:"Kenya",flag:"🇰🇪",online:true,image:"1yksVqCQb9a811NgiKi9gL0U3mQcFjTl-"},
+{name:"🥵 Cindy",age:24,country:"Kenya",flag:"🇰🇪",online:true,image:"1r9Njm2T9UZKU6uphnUUqFKAtNziyBLam"},
+{name:"🥵💦 Camilla",age:23,country:"Kenya",flag:"🇰🇪",online:false,image:"12dueUGvzViUcc34UjzL5eTMM3TMPOtjW"},
+{name:"Patricia",age:24,country:"Tanzania",flag:"🇹🇿",online:true,image:"1VvOiRBCk14TxVTbtO55TI0sC8EGBCgro"},
+{name:"🥵🤪 Jennifer",age:22,country:"Uganda",flag:"🇺🇬",online:false,image:"1SVvPBMFHqUp_S84SVMk1EiJn7GP9Ymhn"},
+{name:"🤪 Essie",age:26,country:"Uganda",flag:"🇺🇬",online:true,image:"1-pbQ4xKQL1CMkJDZYEp-pVYeGxo7MW6W"},
+{name:"🥵💦 Kemmy",age:23,country:"Kenya",flag:"🇰🇪",online:true,image:"1kvzEowr8IXZ58wqzhJ9BsgxHxfh50BYY"},
+{name:"😚 Stacy",age:26,country:"Kenya",flag:"🇰🇪",online:false,image:"1V1LIJ7t5lbQwZnHY1kaAUNdrWXszkit7"},
+{name:"😍 Wanjiku",age:19,country:"Kenya",flag:"🇰🇪",online:true,image:"1s8LTxAIw3KgdULGEcQpXcq_EfB0sh3DY"},
+{name:"😚🥵 Joina",age:21,country:"Tanzania",flag:"🇹🇿",online:true,image:"17xeD8VKnr0kXi0vNWtsdOvKwY2SHU2X4"},
+{name:"🤪 Brendah",age:21,country:"Tanzania",flag:"🇹🇿",online:false,image:"104gLq79PKlUO7sLZUuIurIMEFBkwpbzz"},
+{name:"🥵 Alexa",age:24,country:"Kenya",flag:"🇰🇪",online:true,image:"1FaYHK7LYNHr-vDGz3dX6NXyt_Jc5mnZm"},
+{name:"🥵 Shicks",age:26,country:"Kenya",flag:"🇰🇪",online:false,image:"1afPEU9iabo1Jz1XjOr4_9M_tT0gHf2YT"},
+{name:"🥵💦 Shantell",age:27,country:"Kenya",flag:"🇰🇪",online:true,image:"1vdUCTlw4spF6rSbgIkPVk1E6fSUJVf9B"},
+{name:"🥵💦 Joy",age:25,country:"Kenya",flag:"🇰🇪",online:true,image:"1CU5qzhKhaF0nWzFPDPAdaKtCq6E10GYU"},
+{name:"❤️ Amira",age:20,country:"Uganda",flag:"🇺🇬",online:false,image:"1LcIoAFMlM_vZp1Wz2M5nJnDBo4n4b3ul"},
+{name:"😜 Betty",age:18,country:"Kenya",flag:"🇰🇪",online:false,image:"1yfVRjp_LbOgTMEt7WtaK8Hpv58bi_xBN"}
+];
+
+const creatorVideoUrls={
+"Emmah":"https://www.dropbox.com/scl/fi/35kb0s5mdx2js47js8oas/Emmah.mp4?rlkey=807l114ppum6wabbzy29a5ut2&st=h33lz5co&raw=1",
+"Moraa":"https://www.dropbox.com/scl/fi/73tg3stx1tnv1zjiu4nth/Moraa.mp4?rlkey=7b8wdiwaiuisrp7ip2twon5fb&st=w6kxzfyo&raw=1",
+"Farida":"https://www.dropbox.com/scl/fi/ddvqb59fbiitqhukjg23j/Farida.mp4?rlkey=3hp09tbvu52uogcti6t7k59q5&st=mj10tine&raw=1",
+"Makena":"https://www.dropbox.com/scl/fi/80s8uss87whmoyzche4lp/Makena.mp4?rlkey=hku37tu1f8n80trjl65h7um5c&st=k9lmvf05&raw=1",
+"Joi":"https://www.dropbox.com/scl/fi/9kjcvrx3jfz97tvww85ji/Joi.mp4?rlkey=1ni0l3yju44x5cq3lkkb9f6a5&st=vw92pz3j&raw=1",
+"Cindy":"https://www.dropbox.com/scl/fi/i2ng0921hd1rzxtxy3z0u/Cindy.mp4?rlkey=i63v39dy3rr9o5e7vbhonu2vh&st=4dw3nilg&raw=1",
+"Camilla":"https://www.dropbox.com/scl/fi/g98kwd45jke5d9wxnskqm/Camilla.mp4?rlkey=vscm39yfmevyfpiw6q90gkgbx&st=4x20nuhh&raw=1",
+"Patricia":"https://www.dropbox.com/scl/fi/mzmoaun6v0xcg6riqppjq/Patricia.mp4?rlkey=t49h9b8q5uf5ojpa4j9030q0o&st=syjq29n0&raw=1",
+"Jennifer":"https://www.dropbox.com/scl/fi/d5g9u0201e666a8vtumtd/Jennifer.mp4?rlkey=vjt3skwdjxx41cviog1t5ow6j&st=k6lqfy8l&raw=1",
+"Essie":"https://www.dropbox.com/scl/fi/temwnl0fhlg3onrq6p7im/Essie.mp4?rlkey=yukipkv5vg6jhdt1hcr5e6ebx&st=taw3b258&raw=1",
+"Kemmy":"https://www.dropbox.com/scl/fi/gijnwueh6t20569g86wzi/Kemmy.mp4?rlkey=5a48xu2kvsyd96t3ac3jtkoxh&st=vwulma8f&raw=1",
+"Stacy":"https://www.dropbox.com/scl/fi/x3jkk9y4w8gel9qrlmyjj/Stacy.mp4?rlkey=km1azf33i6yxfao0ot6mbhgsk&st=g5hhkec6&raw=1",
+"Wanjiku":"https://www.dropbox.com/scl/fi/xktd6sruu92b9cs04xo8l/Wanjiku.mp4?rlkey=o59tkmnhf7lwl60h1kcxauyu9&st=hbl91f9q&raw=1",
+"Joina":"https://www.dropbox.com/scl/fi/av8d772c7jwt6fwqxxuhf/Joina.mp4?rlkey=mfu2yziiprzz8prkoq0awlz7q&st=li1hvj1u&raw=1",
+"Brendah":"https://www.dropbox.com/scl/fi/t6u4op8c44xnqo7ixi6wk/Brendah.mp4?rlkey=3rlvbchwdd9qbcrytg6kwlw6k&st=75jl9m0k&raw=1",
+"Alexa":"https://www.dropbox.com/scl/fi/u8wwoypbo3cb227fg4uuf/Alexa.mp4?rlkey=3vabgxwv2d4jjytnxgomcr1y2&st=6f0s47b7&raw=1",
+"Shicks":"https://www.dropbox.com/scl/fi/ezkwmuvu79jt3qmb59j8d/Shicks.mp4?rlkey=h6qjnh5mskzwhskg51ajdabx1&st=fz5epbnq&raw=1",
+"Shantell":"https://www.dropbox.com/scl/fi/9hcb2391z9rz6pegqe9uo/Shantell.mp4?rlkey=7g0qno1rp51a4woem2krw3fgn&st=867t6wk7&raw=1",
+"Joy":"https://www.dropbox.com/scl/fi/nletkvbt8ic4gc6a3vxqq/Joy.mp4?rlkey=6uoelk0evtkovngouaub81ccd&st=7bxfldka&raw=1",
+"Amira":"https://www.dropbox.com/scl/fi/diyyw8912z1et6z1bqlcz/Amira.mp4?rlkey=jznhsqc6y550wfg3yw8p2exlw&st=koi4bf9o&raw=1",
+"Betty":"https://www.dropbox.com/scl/fi/pnxyjyn5qam74xbuoyxyu/Betty.mp4?rlkey=vhde0lyek07f4atydfvidk6jb&st=bm47brd4&raw=1"
+};
+
+const freePromoVideoUrl="https://www.dropbox.com/scl/fi/py52hhs4iiv0r0e1aly2z/free-video.mp4?rlkey=y10db53ig6ja4cecrh3anvclj&st=nbufx4pj&raw=1";
+const PROMO_WATCHED_KEY="velvetplay_free_promo_watched";
+const VIEWING_SECONDS_KEY="velvetplay_viewing_seconds_used";
+
+const packages=[
+{minutes:35,price:100,hot:true},{minutes:50,price:150},{minutes:70,price:200},
+{minutes:100,price:250},{minutes:130,price:300},{minutes:160,price:350}
+];
+
+let currentCreator=null,minutesBalance=0,memberName="Guest Member";
+let currentPaymentId=null,paymentTimer=null,selectedPackage=null,selectedMethod="mpesa",paymentInProgress=false;
+const activity=[];
+
+let activeCreatorVideo=null;
+let lastVideoTime=0;
+let viewingSecondsUsed=Number(localStorage.getItem(VIEWING_SECONDS_KEY)||"0");
+if(!Number.isFinite(viewingSecondsUsed)||viewingSecondsUsed<0)viewingSecondsUsed=0;
+
+function creatorKey(name){return String(name||"").replace(/[^A-Za-z]/g,"");}
+function availableViewingSeconds(){return Math.max(0,minutesBalance*60-viewingSecondsUsed);}
+function persistViewingSeconds(){try{localStorage.setItem(VIEWING_SECONDS_KEY,String(viewingSecondsUsed));}catch(e){}}
+function saveViewingSeconds(){
+const before=Math.floor(viewingSecondsUsed/60);
+persistViewingSeconds();
+const after=Math.floor(viewingSecondsUsed/60);
+if(after!==before){updateMinutes();renderProfile();}
+}
+
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const cameraSvg='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13a4 4 0 0 0-4 4v17a4 4 0 0 0 4 4h23a4 4 0 0 0 4-4v-3l8 6c2 1 4 0 4-3V14c0-3-2-4-4-2l-8 6v-1a4 4 0 0 0-4-4H8z"/></svg>';
+
+function cardMarkup(c){
+const i=creators.indexOf(c);
+return `<article class="creator-card"><img class="creator-photo" src="${driveImage(c.image)}" alt="${escapeHtml(c.name)}" loading="lazy" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=${encodeURIComponent(c.image)}'">
+${c.online?'<div class="live"><span class="dot online"></span> LIVE</div>':''}<span class="age">${c.age}+</span>
+<div class="card-info"><div class="creator-name">${escapeHtml(c.name)}</div><div class="creator-meta"><span class="dot ${c.online?'online':'offline'}"></span>${c.online?'Online':'Offline'} · ${c.flag} ${c.country}</div></div>
+<button class="camera" aria-label="Call ${escapeHtml(c.name)}" onclick="startCall(${i})">${cameraSvg}</button></article>`;
+}
+function renderCreators(){
+const q=(document.getElementById("creatorSearch").value||"").trim().toLowerCase();
+const list=creators.filter(c=>(c.name+" "+c.country).toLowerCase().includes(q));
+document.getElementById("creatorGrid").innerHTML=list.length?list.map(cardMarkup).join(""):'<div class="empty">No creators found.</div>';
+document.getElementById("creatorCount").textContent=list.length+" creators";
+}
+function renderCallCreators(){document.getElementById("callCreatorGrid").innerHTML=creators.map(cardMarkup).join("");}
+
+function showPage(page){
+closeCall();hidePayScreens();
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+const section=document.getElementById("page-"+page);if(section)section.classList.add("active");
+document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+const nav=document.getElementById("nav-"+page);if(nav)nav.classList.add("active");
+if(page==="packages")renderPackages();if(page==="profile")renderProfile();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+function showCallsPage(){
+hidePayScreens();document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById("page-calls").classList.add("active");
+document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+document.getElementById("nav-calls").classList.add("active");renderCallCreators();
+let i=Math.floor(Math.random()*creators.length);
+if(currentCreator&&creators.length>1&&creators[i]===currentCreator)i=(i+1)%creators.length;
+startCall(i);
+}
+function startCall(index){
+currentCreator=creators[index]||creators[0];const src=driveImage(currentCreator.image);
+document.getElementById("callAvatar").src=src;document.getElementById("callBackdrop").src=src;
+document.getElementById("callName").textContent=currentCreator.name;
+document.getElementById("callScreen").classList.add("show");document.body.style.overflow="hidden";
+addActivity("Incoming call · "+currentCreator.name);
+}
+function closeCall(){
+stopCreatorVideo(false);
+document.getElementById("callScreen").classList.remove("show");document.body.style.overflow="";
+}
+function finishCall(action){
+if(action==="answered"){openCreatorVideo();return;}
+const name=currentCreator?currentCreator.name:"Creator";closeCall();addActivity((action==="answered"?"Answered call · ":"Declined call · ")+name);
+showPage("packages");document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
+}
+
+function openCreatorVideo(){
+if(!currentCreator)return;
+const key=creatorKey(currentCreator.name);
+const url=creatorVideoUrls[key];
+const video=document.getElementById("creatorVideo");
+const area=document.getElementById("callVideoArea");
+const status=document.getElementById("videoStatus");
+if(!url){
+status.className="video-status error";
+status.textContent="This creator's video is not available yet.";
+area.classList.add("show");
+return;
+}
+stopCreatorVideo(false);
+activeCreatorVideo=currentCreator;
+lastVideoTime=0;
+video.src=url;
+document.getElementById("videoCreatorName").textContent=currentCreator.name;
+updateVideoMinutes();
+status.className="video-status";
+status.textContent="Loading video...";
+area.classList.add("show");
+addActivity("Started video · "+currentCreator.name);
+video.play().catch(()=>{
+status.className="video-status";
+status.textContent="Tap the video to start playback. Viewing minutes are used only while it plays.";
+});
+}
+function handleCreatorTimeUpdate(){
+const video=document.getElementById("creatorVideo");
+if(!activeCreatorVideo||!video||video.paused||video.ended||video.readyState<2)return;
+const delta=video.currentTime-lastVideoTime;
+lastVideoTime=video.currentTime;
+if(delta>0&&delta<2)viewingSecondsUsed+=delta;
+saveViewingSeconds();
+updateVideoMinutes();
+if(availableViewingSeconds()<=0){
+video.pause();
+const status=document.getElementById("videoStatus");
+status.className="video-status error";
+status.textContent="Insufficient minutes — Buy Minutes";
+addActivity("Insufficient minutes · "+activeCreatorVideo.name);
+}
+}
+function handleCreatorPauseOrEnd(){
+const video=document.getElementById("creatorVideo");
+if(video)lastVideoTime=video.currentTime;
+saveViewingSeconds();
+if(video&&video.ended&&activeCreatorVideo){
+addActivity("Finished video · "+activeCreatorVideo.name);
+const status=document.getElementById("videoStatus");
+status.className="video-status";
+status.textContent="Video ended. Choose another creator or buy more minutes.";
+}
+}
+function handleCreatorError(){
+const status=document.getElementById("videoStatus");
+status.className="video-status error";
+status.textContent="This video could not load. Please try again later. No viewing minutes were used.";
+}
+function stopCreatorVideo(recordActivity=true){
+const video=document.getElementById("creatorVideo");
+if(video){
+video.pause();
+video.removeEventListener("timeupdate",handleCreatorTimeUpdate);
+video.removeEventListener("pause",handleCreatorPauseOrEnd);
+video.removeEventListener("ended",handleCreatorPauseOrEnd);
+video.removeEventListener("error",handleCreatorError);
+video.removeAttribute("src");
+video.load();
+}
+if(activeCreatorVideo&&recordActivity)addActivity("Stopped video · "+activeCreatorVideo.name);
+activeCreatorVideo=null;
+lastVideoTime=0;
+document.getElementById("callVideoArea").classList.remove("show");
+const status=document.getElementById("videoStatus");
+status.className="video-status";status.textContent="";
+}
+function updateVideoMinutes(){
+const remainingMinutes=Math.max(0,Math.ceil(availableViewingSeconds()/60));
+document.getElementById("videoMinutes").textContent=remainingMinutes+" min";
+}
+function stopCreatorVideoAndBuy(){
+stopCreatorVideo();
+showPage("packages");
+document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
+}
+
+function initializePromoVideo(){
+let watched=false;
+try{watched=localStorage.getItem(PROMO_WATCHED_KEY)==="true";}catch(e){}
+if(watched)return;
+const video=document.getElementById("freePromoVideo");
+const screen=document.getElementById("promoScreen");
+video.src=freePromoVideoUrl;
+screen.classList.add("show");
+document.body.style.overflow="hidden";
+video.addEventListener("ended",function onPromoEnded(){
+video.removeEventListener("ended",onPromoEnded);
+try{localStorage.setItem(PROMO_WATCHED_KEY,"true");}catch(e){}
+closePromoVideo();
+},{once:true});
+video.play().catch(()=>{
+/* Mobile browsers may require a user tap before autoplay. */
+});
+}
+function closePromoVideo(){
+const video=document.getElementById("freePromoVideo");
+const screen=document.getElementById("promoScreen");
+video.pause();
+if(video.ended){
+try{localStorage.setItem(PROMO_WATCHED_KEY,"true");}catch(e){}
+}
+screen.classList.remove("show");
+document.body.style.overflow="";
+video.removeAttribute("src");
+video.load();
+}
+
+function renderPackages(){
+document.getElementById("packageGrid").innerHTML=packages.map((p,i)=>`
+<article class="package-card"><button class="package-buy" onclick="buyPackage(${i})" aria-label="Buy ${p.minutes} minutes for KSh ${p.price}">
+<div class="package-top">${p.hot?'<span class="hot-badge">🔥 HOT</span>':''}<div class="package-camera">${cameraSvg}</div><div class="package-minutes">${p.minutes} Mins</div></div>
+<div class="package-price"><div class="package-ksh">Ksh ${p.price}</div><div class="package-usd">${usdApprox(p.price)}</div></div></button></article>`).join("");
+}
+function usdApprox(ksh){return "≈ $"+(ksh*0.00775).toFixed(2);}
+
+function buyPackage(index){
+selectedPackage=packages[index];selectedMethod="mpesa";
+document.getElementById("checkoutMinutes").textContent=selectedPackage.minutes+" Minutes";
+document.getElementById("checkoutPrice").textContent="Ksh "+selectedPackage.price.toFixed(2);
+document.getElementById("paymentAmount").textContent="Ksh "+selectedPackage.price.toFixed(2);
+document.getElementById("checkoutMessage").textContent="";
+document.getElementById("phoneMessage").textContent="";
+document.getElementById("authMessage").textContent="";
+document.getElementById("phoneNumber").value="";
+selectMethod("mpesa");showPayScreen("checkoutScreen");
+}
+function hidePayScreens(){document.querySelectorAll(".pay-page").forEach(el=>el.classList.remove("show"));}
+function showPayScreen(id){hidePayScreens();document.getElementById(id).classList.add("show");window.scrollTo(0,0);}
+function backFromCheckout(){hidePayScreens();showPage("packages");}
+function selectMethod(method){
+selectedMethod=method;
+document.getElementById("methodMpesa").classList.toggle("selected",method==="mpesa");
+document.getElementById("methodPaypal").classList.toggle("selected",method==="paypal");
+}
+function proceedCheckout(){
+if(!selectedPackage)return;
+if(selectedMethod==="paypal"){
+document.getElementById("checkoutMessage").textContent="PayPal checkout is not configured yet. Please select M-Pesa.";
+return;
+}
+showPayScreen("paymentScreen");
+}
+function normalizeKenyanPhone(value){
+let n=String(value||"").replace(/D/g,"");
+if(n.startsWith("254")&&n.length===12)n=n.slice(3);
+if(n.startsWith("0")&&n.length===10)n=n.slice(1);
+if(/^[17]d{8}$/.test(n))return "254"+n;
+return null;
+}
+function goToAuthorization(){
+const raw=document.getElementById("phoneNumber").value;
+const normalized=normalizeKenyanPhone(raw);
+if(!normalized){
+document.getElementById("phoneMessage").textContent="Enter a valid Kenyan M-Pesa number, e.g. 0712345678.";
+return;
+}
+document.getElementById("authAmount").textContent="KES "+selectedPackage.price;
+document.getElementById("authPhone").textContent=normalized;
+document.getElementById("authMessage").textContent="";
+showPayScreen("authorizeScreen");
+}
+function paymentMessage(text,type=""){
+const el=document.getElementById("paymentMessage");el.className="message "+type;el.textContent=text;
+}
+async function sendStkPrompt(){
+if(!selectedPackage||paymentInProgress)return;
+const phone=normalizeKenyanPhone(document.getElementById("phoneNumber").value);
+if(!phone){document.getElementById("authMessage").textContent="Enter a valid phone number first.";return;}
+paymentInProgress=true;
+const button=document.getElementById("sendPromptButton");
+button.disabled=true;button.textContent="Sending...";
+document.getElementById("authMessage").textContent="Connecting to the payment service...";
+try{
+const session=await fetch("/api/session",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({})});
+if(!session.ok)throw new Error("Payment service is not available. Configure your backend first.");
+const response=await fetch("/api/payments/stk",{
+method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
+body:JSON.stringify({phone:phone,amount:selectedPackage.price,minutes:selectedPackage.minutes})
+});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.message||data.error||"Could not start payment.");
+currentPaymentId=data.payment_id||data.paymentId||data.id;
+if(!currentPaymentId)throw new Error("No payment reference was returned by the server.");
+document.getElementById("authMessage").textContent="Payment request sent. Check your phone and enter your M-Pesa PIN on the official prompt.";
+addActivity("Payment request · KSh "+selectedPackage.price);
+checkPayment(selectedPackage);
+}catch(error){
+document.getElementById("authMessage").textContent=(error.message||"Payment failed.")+" No minutes have been added.";
+}
+finally{paymentInProgress=false;button.disabled=false;button.textContent="Send Prompt";}
+}
+async function checkPayment(pkg){
+clearTimeout(paymentTimer);if(!currentPaymentId)return;
+try{
+const response=await fetch("/api/payments/"+encodeURIComponent(currentPaymentId),{credentials:"include"});
+const data=await response.json().catch(()=>({}));
+if(response.ok){
+const status=String(data.status||"").toLowerCase();
+if(["paid","confirmed","success","completed"].includes(status)){
+const meResponse=await fetch("/api/me",{credentials:"include"});
+if(meResponse.ok){
+const me=await meResponse.json();
+const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
+if(Number.isFinite(balance))minutesBalance=balance;
+}
+updateMinutes();
+document.getElementById("authMessage").textContent="Payment confirmed. Your minutes balance has been refreshed.";
+addActivity("Payment confirmed");return;
+}
+if(["failed","cancelled","canceled","rejected","expired"].includes(status)){
+document.getElementById("authMessage").textContent="Payment was not completed. Please try again.";return;
+}
+}
+}catch(e){}
+paymentTimer=setTimeout(()=>checkPayment(pkg),4000);
+}
+
+async function refreshMember(){
+try{
+const response=await fetch("/api/me",{credentials:"include"});if(!response.ok)return;
+const me=await response.json();const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
+if(Number.isFinite(balance))minutesBalance=balance;
+if(me.name||me.full_name)memberName=me.name||me.full_name;
+updateMinutes();renderProfile();
+}catch(e){}
+}
+function updateMinutes(){
+document.getElementById("minutesHeader").textContent=minutesBalance+" min";
+document.getElementById("minutesProfile").textContent=minutesBalance;
+updateVideoMinutes();
+}
+function renderProfile(){
+document.getElementById("profileName").textContent=memberName;updateMinutes();
+document.getElementById("activityList").innerHTML=activity.length
+?activity.slice(0,8).map(a=>`<div style="padding:9px 0;border-bottom:1px solid #ffffff10">${escapeHtml(a)}</div>`).join("")
+:"No recent activity.";
+}
+function editName(){
+const name=prompt("Enter your display name:",memberName);
+if(name&&name.trim()){memberName=name.trim().slice(0,60);renderProfile();}
+}
+function addActivity(text){
+activity.unshift(new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · "+text);
+if(activity.length>20)activity.pop();renderProfile();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCall();hidePayScreens();}});
+window.addEventListener("pagehide",()=>{stopCreatorVideo(false);});
+
+function bindCreatorVideoEvents(){
+const video=document.getElementById("creatorVideo");
+video.addEventListener("loadedmetadata",()=>{lastVideoTime=video.currentTime;});
+video.addEventListener("play",()=>{lastVideoTime=video.currentTime;});
+video.addEventListener("timeupdate",handleCreatorTimeUpdate);
+video.addEventListener("pause",handleCreatorPauseOrEnd);
+video.addEventListener("ended",handleCreatorPauseOrEnd);
+video.addEventListener("error",handleCreatorError);
+}
+
+renderCreators();renderCallCreators();renderPackages();updateMinutes();refreshMember();
+bindCreatorVideoEvents();
+initializePromoVideo();
+</script>
+</body>
+</html>
