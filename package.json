@@ -2,6 +2,12 @@
   "name": "velvetplay",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "node --check server.js && node --check lib/*.js && node --check api/*.js && node --check api/payments/*.js",
+    "test": "node --test"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
     "@vercel/kv": "^1.0.1"

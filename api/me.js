@@ -1,4 +1,4 @@
-const { kv } = require("@vercel/kv");
+const { getProfileBySession } = require("../lib/supabase");
 
 function getSessionId(req) {
   const cookies = req.cookies || {};
@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const user = await kv.get(`user:${sessionId}`);
+    const user = await getProfileBySession(sessionId);
 
     if (!user) {
       return res.status(200).json({
@@ -26,8 +26,9 @@ module.exports = async (req, res) => {
     }
 
     return res.status(200).json({
-      minutes_balance: user.minutes_balance || 0,
-      name: user.name || "Guest Member"
+      minutes_balance: Number(user.minutes_balance || 0),
+      name: user.name || "Guest Member",
+      session_id: sessionId
     });
   } catch (error) {
     return res.status(500).json({ error: "Could not load account" });

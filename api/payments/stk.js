@@ -1,34 +1,10 @@
-const { kv } = require("@vercel/kv");
+const { kv } = require("../../lib/kv");
 const crypto = require("crypto");
+const { normalizeKenyanPhone, isValidKenyanPhone } = require("../../lib/phone");
+const { getDarajaToken, getDarajaBaseUrl, getDarajaTimestamp, buildPassword } = require("../../lib/daraja");
 
 function getSessionId(req) {
   return (req.cookies || {}).vp_session || null;
-}
-
-async function getDarajaToken() {
-  const key = process.env.MPESA_CONSUMER_KEY;
-  const secret = process.env.MPESA_CONSUMER_SECRET;
-  const env = process.env.MPESA_ENVIRONMENT || "sandbox";
-
-  const url =
-    env === "production"
-      ? "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-      : "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
-
-  const auth = Buffer.from(`${key}:${secret}`).toString("base64");
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Basic ${auth}`
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not authenticate with M-Pesa");
-  }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 module.exports = async (req, res) => {
@@ -49,13 +25,22 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: "Session expired" });
     }
 
+    const packageConfig = {
+      35: 100,
+      50: 150,
+      70: 200,
+      100: 250,
+      130: 300,
+      160: 350
+    };
+
     const { phone, amount, minutes } = req.body || {};
 
-    const normalizedPhone = String(phone || "").replace(/D/g, "");
+    const normalizedPhone = normalizeKenyanPhone(phone);
     const numericAmount = Number(amount);
     const numericMinutes = Number(minutes);
 
-    if (!/^254[17]d{8}$/.test(normalizedPhone)) {
+    if (!normalizedPhone || !isValidKenyanPhone(normalizedPhone)) {
       return res.status(400).json({ error: "Invalid M-Pesa phone number" });
     }
 
@@ -67,26 +52,39 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "Invalid minutes package" });
     }
 
+    const allowedAmount = packageConfig[numericMinutes];
+    if (allowedAmount && numericAmount !== allowedAmount) {
+      return res.status(400).json({ error: "Package amount mismatch" });
+    }
+    if (!allowedAmount) {
+      return res.status(400).json({ error: "Unsupported package" });
+    }
+
     const env = process.env.MPESA_ENVIRONMENT || "sandbox";
+    const merchantBusinessShortCode = process.env.MPESA_TILL_NUMBER || process.env.MPESA_SHORTCODE;
+    const requiredKeys = [
+      "MPESA_CONSUMER_KEY",
+      "MPESA_CONSUMER_SECRET",
+      "MPESA_PASSKEY"
+    ];
+
+    if (env === "production") {
+      const missing = requiredKeys.filter((name) => !process.env[name]);
+      if (missing.length || !merchantBusinessShortCode || !process.env.MPESA_CALLBACK_URL) {
+        return res.status(500).json({
+          error: "Production M-Pesa credentials, merchant configuration, and callback URL are not fully configured."
+        });
+      }
+    }
+
     const token = await getDarajaToken();
-
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[-:TZ.]/g, "")
-      .slice(0, 14);
-
-    const password = Buffer.from(
-      `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
-    ).toString("base64");
-
-    const stkUrl =
-      env === "production"
-        ? "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-        : "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
-
+    const timestamp = getDarajaTimestamp();
+    const transactionType = process.env.MPESA_TRANSACTION_TYPE || (process.env.MPESA_TILL_NUMBER ? "CustomerBuyGoodsOnline" : "CustomerPayBillOnline");
+    const password = buildPassword(merchantBusinessShortCode, process.env.MPESA_PASSKEY, timestamp);
+    const stkUrl = `${getDarajaBaseUrl(env)}/mpesa/stkpush/v1/processrequest`;
     const callbackUrl = process.env.MPESA_CALLBACK_URL;
 
-    if (!callbackUrl) {
+    if (!callbackUrl && env === "sandbox") {
       return res.status(500).json({
         error: "M-Pesa callback URL is not configured"
       });
@@ -99,13 +97,13 @@ module.exports = async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        BusinessShortCode: process.env.MPESA_SHORTCODE,
+        BusinessShortCode: merchantBusinessShortCode,
         Password: password,
         Timestamp: timestamp,
-        TransactionType: "CustomerPayBillOnline",
+        TransactionType: transactionType,
         Amount: numericAmount,
         PartyA: normalizedPhone,
-        PartyB: process.env.MPESA_SHORTCODE,
+        PartyB: merchantBusinessShortCode,
         PhoneNumber: normalizedPhone,
         CallBackURL: callbackUrl,
         AccountReference: "VelvetPlay",

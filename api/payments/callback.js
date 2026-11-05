@@ -1,4 +1,5 @@
-const { kv } = require("@vercel/kv");
+const { kv } = require("../../lib/kv");
+const { queryStkPush, creditUserMinutes } = require("../../lib/daraja");
 
 module.exports = async (req, res) => {
   try {
@@ -30,23 +31,35 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (payment.status === "paid") {
+      return res.status(200).json({
+        ResultCode: 0,
+        ResultDesc: "Accepted"
+      });
+    }
+
     const resultCode = Number(callback.ResultCode);
     const succeeded = resultCode === 0;
 
     if (succeeded && payment.status !== "paid") {
-      const sessionId = payment.session_id;
-      const user = await kv.get(`user:${sessionId}`);
+      const query = await queryStkPush({
+        checkoutRequestId: callback.CheckoutRequestID,
+        env: process.env.MPESA_ENVIRONMENT || "sandbox"
+      });
 
-      if (user) {
-        user.minutes_balance =
-          (user.minutes_balance || 0) + Number(payment.minutes || 0);
-
-        await kv.set(`user:${sessionId}`, user);
+      if (query?.ok && Number(query.data?.ResultCode) === 0) {
+        await creditUserMinutes(payment.session_id, payment.minutes, paymentId, {
+          amount: payment.amount,
+          reference: payment.checkout_request_id
+        });
+        payment.status = "paid";
+        payment.completed_at = new Date().toISOString();
+        await kv.set(`payment:${paymentId}`, payment);
+      } else {
+        payment.status = "pending";
+        payment.result_desc = query?.data?.ResultDesc || callback.ResultDesc || "Awaiting confirmation";
+        await kv.set(`payment:${paymentId}`, payment);
       }
-
-      payment.status = "paid";
-      payment.completed_at = new Date().toISOString();
-      await kv.set(`payment:${paymentId}`, payment);
     } else if (!succeeded && payment.status === "pending") {
       payment.status = "failed";
       payment.result_desc = callback.ResultDesc || "Payment failed";

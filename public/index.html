@@ -346,11 +346,18 @@ if(!Number.isFinite(viewingSecondsUsed)||viewingSecondsUsed<0)viewingSecondsUsed
 function creatorKey(name){return String(name||"").replace(/[^A-Za-z]/g,"");}
 function availableViewingSeconds(){return Math.max(0,minutesBalance*60-viewingSecondsUsed);}
 function persistViewingSeconds(){try{localStorage.setItem(VIEWING_SECONDS_KEY,String(viewingSecondsUsed));}catch(e){}}
+async function syncVideoUsageToServer(){
+if(!activeCreatorVideo||viewingSecondsUsed<=0)return;
+try{
+await fetch("/api/video/usage",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({creator:activeCreatorVideo.name,seconds:Math.max(0,Math.round(viewingSecondsUsed))})});
+}catch(e){}
+}
 function saveViewingSeconds(){
 const before=Math.floor(viewingSecondsUsed/60);
 persistViewingSeconds();
 const after=Math.floor(viewingSecondsUsed/60);
 if(after!==before){updateMinutes();renderProfile();}
+if(activeCreatorVideo&&viewingSecondsUsed>0){syncVideoUsageToServer();}
 }
 
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -561,10 +568,11 @@ return;
 showPayScreen("paymentScreen");
 }
 function normalizeKenyanPhone(value){
-let n=String(value||"").replace(/D/g,"");
-if(n.startsWith("254")&&n.length===12)n=n.slice(3);
-if(n.startsWith("0")&&n.length===10)n=n.slice(1);
-if(/^[17]d{8}$/.test(n))return "254"+n;
+const compact=String(value||"").replace(/\s+/g,"").replace(/^\+/,"");
+if(!compact)return null;
+if(compact.startsWith("254")&&/^254[17]\d{8}$/.test(compact))return compact;
+if(compact.startsWith("0")&&/^0[17]\d{8}$/.test(compact))return "254"+compact.slice(1);
+if(/^[17]\d{8}$/.test(compact))return "254"+compact;
 return null;
 }
 function goToAuthorization(){
