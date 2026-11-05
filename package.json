@@ -5,11 +5,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "node --check server.js && node --check lib/*.js && node --check api/*.js && node --check api/payments/*.js",
+    "build": "node --check server.js && node --check lib/*.js && node --check api/*.js && node --check api/payments/*.js && node --check api/video/*.js",
     "test": "node --test"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0",
-    "@vercel/kv": "^1.0.1"
+    "@supabase/supabase-js": "^2.0.0"
   }
 }

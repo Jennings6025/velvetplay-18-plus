@@ -1,36 +1,19 @@
-const { getProfileBySession } = require("../lib/supabase");
-
-function getSessionId(req) {
-  const cookies = req.cookies || {};
-  return cookies.vp_session || null;
-}
+const { getMemberBySessionToken } = require('../lib/supabase');
 
 module.exports = async (req, res) => {
   try {
-    const sessionId = getSessionId(req);
-
-    if (!sessionId) {
-      return res.status(200).json({
-        minutes_balance: 0,
-        name: "Guest Member"
-      });
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const user = await getProfileBySession(sessionId);
-
-    if (!user) {
-      return res.status(200).json({
-        minutes_balance: 0,
-        name: "Guest Member"
-      });
-    }
-
+    const member = await getMemberBySessionToken(req.cookies?.vp_session);
+    const balanceSeconds = member ? Math.max(0, Number(member.balance_seconds) || 0) : 0;
     return res.status(200).json({
-      minutes_balance: Number(user.minutes_balance || 0),
-      name: user.name || "Guest Member",
-      session_id: sessionId
+      balance_seconds: balanceSeconds,
+      minutes_balance: Math.ceil(balanceSeconds / 60),
+      name: 'Guest Member'
     });
   } catch (error) {
-    return res.status(500).json({ error: "Could not load account" });
+    return res.status(500).json({ error: 'Could not load account' });
   }
 };

@@ -1,80 +1,68 @@
-const { kv } = require("../../lib/kv");
-const { queryStkPush, creditUserMinutes } = require("../../lib/daraja");
+const store = require('../../lib/supabase');
+const {
+  queryStkPush,
+  isSuccessfulStkQuery,
+  callbackMatchesPayment,
+  getCallbackReceipt
+} = require('../../lib/daraja');
 
-module.exports = async (req, res) => {
-  try {
-    const body = req.body || {};
-    const callback = body.Body && body.Body.stkCallback;
+function accepted(res) {
+  return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
+}
 
-    if (!callback || !callback.CheckoutRequestID) {
-      return res.status(400).json({
-        ResultCode: 1,
-        ResultDesc: "Invalid callback"
-      });
-    }
-
-    const paymentId = await kv.get(`checkout:${callback.CheckoutRequestID}`);
-
-    if (!paymentId) {
-      return res.status(200).json({
-        ResultCode: 0,
-        ResultDesc: "Accepted"
-      });
-    }
-
-    const payment = await kv.get(`payment:${paymentId}`);
-
-    if (!payment) {
-      return res.status(200).json({
-        ResultCode: 0,
-        ResultDesc: "Accepted"
-      });
-    }
-
-    if (payment.status === "paid") {
-      return res.status(200).json({
-        ResultCode: 0,
-        ResultDesc: "Accepted"
-      });
-    }
-
-    const resultCode = Number(callback.ResultCode);
-    const succeeded = resultCode === 0;
-
-    if (succeeded && payment.status !== "paid") {
-      const query = await queryStkPush({
-        checkoutRequestId: callback.CheckoutRequestID,
-        env: process.env.MPESA_ENVIRONMENT || "sandbox"
-      });
-
-      if (query?.ok && Number(query.data?.ResultCode) === 0) {
-        await creditUserMinutes(payment.session_id, payment.minutes, paymentId, {
-          amount: payment.amount,
-          reference: payment.checkout_request_id
-        });
-        payment.status = "paid";
-        payment.completed_at = new Date().toISOString();
-        await kv.set(`payment:${paymentId}`, payment);
-      } else {
-        payment.status = "pending";
-        payment.result_desc = query?.data?.ResultDesc || callback.ResultDesc || "Awaiting confirmation";
-        await kv.set(`payment:${paymentId}`, payment);
+function createCallbackHandler({ db = store, query = queryStkPush } = {}) {
+  return async (req, res) => {
+    try {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ ResultCode: 1, ResultDesc: 'Method not allowed' });
       }
-    } else if (!succeeded && payment.status === "pending") {
-      payment.status = "failed";
-      payment.result_desc = callback.ResultDesc || "Payment failed";
-      payment.completed_at = new Date().toISOString();
-      await kv.set(`payment:${paymentId}`, payment);
-    }
 
-    return res.status(200).json({
-      ResultCode: 0,
-      ResultDesc: "Accepted"
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ResultCode: 1,
-      ResultDesc: "Callback processing failed"
-    });
-  }
-};
+      const callback = req.body?.Body?.stkCallback;
+      const checkoutRequestId = callback?.CheckoutRequestID;
+        if (!checkoutRequestId || callback.ResultCode === null || callback.ResultCode === undefined ||
+          !Number.isInteger(Number(callback.ResultCode))) {
+        return res.status(400).json({ ResultCode: 1, ResultDesc: 'Invalid callback' });
+      }
+
+      const payment = await db.getPaymentByCheckoutRequestId(checkoutRequestId);
+      if (!payment || payment.status !== 'pending') return accepted(res);
+
+      const verification = await query({ checkoutRequestId });
+      const queryCheckoutId = verification?.data?.CheckoutRequestID;
+        const rawQueryCode = verification?.data?.ResultCode;
+        const queryCode = Number(rawQueryCode);
+        if (verification?.ok !== true || queryCheckoutId !== checkoutRequestId ||
+          rawQueryCode === null || rawQueryCode === undefined || !Number.isInteger(queryCode)) {
+        return res.status(502).json({ ResultCode: 1, ResultDesc: 'Payment verification is unavailable' });
+      }
+
+      if (isSuccessfulStkQuery(verification, checkoutRequestId)) {
+        if (!callbackMatchesPayment(callback, payment)) return accepted(res);
+
+        const result = await db.confirmPayment(
+          checkoutRequestId,
+          getCallbackReceipt(callback),
+          verification.data.ResultDesc || callback.ResultDesc,
+          req.body
+        );
+        if (result?.status !== 'paid') {
+          return res.status(503).json({ ResultCode: 1, ResultDesc: 'Payment confirmation is pending' });
+        }
+      } else {
+        await db.failPayment(
+          checkoutRequestId,
+          queryCode,
+          verification.data.ResultDesc || callback.ResultDesc || 'Payment failed',
+          req.body
+        );
+      }
+
+      return accepted(res);
+    } catch (error) {
+      return res.status(500).json({ ResultCode: 1, ResultDesc: 'Callback processing failed' });
+    }
+  };
+}
+
+module.exports = createCallbackHandler();
+module.exports.createCallbackHandler = createCallbackHandler;

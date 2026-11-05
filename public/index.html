@@ -327,37 +327,68 @@ const creatorVideoUrls={
 
 const freePromoVideoUrl="https://www.dropbox.com/scl/fi/py52hhs4iiv0r0e1aly2z/free-video.mp4?rlkey=y10db53ig6ja4cecrh3anvclj&st=nbufx4pj&raw=1";
 const PROMO_WATCHED_KEY="velvetplay_free_promo_watched";
-const VIEWING_SECONDS_KEY="velvetplay_viewing_seconds_used";
 
 const packages=[
 {minutes:35,price:100,hot:true},{minutes:50,price:150},{minutes:70,price:200},
 {minutes:100,price:250},{minutes:130,price:300},{minutes:160,price:350}
 ];
 
-let currentCreator=null,minutesBalance=0,memberName="Guest Member";
+let currentCreator=null,minutesBalance=0,balanceSeconds=0,memberName="Guest Member";
 let currentPaymentId=null,paymentTimer=null,selectedPackage=null,selectedMethod="mpesa",paymentInProgress=false;
 const activity=[];
 
 let activeCreatorVideo=null;
+let activeVideoSessionId=null;
+let pendingVideoSessionId=null;
+let pendingVideoStopSessionId=null;
 let lastVideoTime=0;
-let viewingSecondsUsed=Number(localStorage.getItem(VIEWING_SECONDS_KEY)||"0");
-if(!Number.isFinite(viewingSecondsUsed)||viewingSecondsUsed<0)viewingSecondsUsed=0;
+let pendingVideoSeconds=0;
+let pendingVideoEvent=null;
+let videoRequestQueue=Promise.resolve();
 
 function creatorKey(name){return String(name||"").replace(/[^A-Za-z]/g,"");}
-function availableViewingSeconds(){return Math.max(0,minutesBalance*60-viewingSecondsUsed);}
-function persistViewingSeconds(){try{localStorage.setItem(VIEWING_SECONDS_KEY,String(viewingSecondsUsed));}catch(e){}}
-async function syncVideoUsageToServer(){
-if(!activeCreatorVideo||viewingSecondsUsed<=0)return;
-try{
-await fetch("/api/video/usage",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({creator:activeCreatorVideo.name,seconds:Math.max(0,Math.round(viewingSecondsUsed))})});
-}catch(e){}
+function availableViewingSeconds(){return Math.max(0,balanceSeconds);}
+function enqueueVideoEvent(event){
+const run=async()=>{
+const response=await fetch("/api/video/usage",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(event)});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.error||"Could not update video usage.");
+if(Number.isFinite(Number(data.balance_seconds)))balanceSeconds=Math.max(0,Number(data.balance_seconds)-pendingVideoSeconds);
+updateMinutes();
+return data;
+};
+const next=videoRequestQueue.then(run,run);
+videoRequestQueue=next.catch(()=>{});
+return next;
 }
-function saveViewingSeconds(){
-const before=Math.floor(viewingSecondsUsed/60);
-persistViewingSeconds();
-const after=Math.floor(viewingSecondsUsed/60);
-if(after!==before){updateMinutes();renderProfile();}
-if(activeCreatorVideo&&viewingSecondsUsed>0){syncVideoUsageToServer();}
+function flushPendingVideoUsage(sessionId=activeVideoSessionId){
+if(!sessionId)return Promise.resolve();
+if(pendingVideoSessionId&&pendingVideoSessionId!==sessionId)return Promise.reject(new Error("Video usage belongs to another session."));
+if(!pendingVideoEvent){
+const seconds=Math.min(15,Math.floor(pendingVideoSeconds));
+if(seconds<1)return videoRequestQueue;
+pendingVideoSeconds-=seconds;
+pendingVideoSessionId=sessionId;
+pendingVideoEvent={action:"usage",video_session_id:sessionId,seconds:seconds,idempotency_key:crypto.randomUUID()};
+}
+const event=pendingVideoEvent;
+return enqueueVideoEvent(event).then(()=>{
+if(pendingVideoEvent===event)pendingVideoEvent=null;
+if(pendingVideoSeconds>=1)return flushPendingVideoUsage(sessionId);
+if(!pendingVideoEvent)pendingVideoSessionId=null;
+});
+}
+async function stopVideoSession(sessionId){
+if(!sessionId)return true;
+try{
+await flushPendingVideoUsage(sessionId);
+await enqueueVideoEvent({action:"stop",video_session_id:sessionId});
+if(pendingVideoStopSessionId===sessionId)pendingVideoStopSessionId=null;
+return true;
+}catch(error){
+pendingVideoStopSessionId=sessionId;
+return false;
+}
 }
 
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -413,7 +444,7 @@ const name=currentCreator?currentCreator.name:"Creator";closeCall();addActivity(
 showPage("packages");document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
 }
 
-function openCreatorVideo(){
+async function openCreatorVideo(){
 if(!currentCreator)return;
 const key=creatorKey(currentCreator.name);
 const url=creatorVideoUrls[key];
@@ -426,28 +457,58 @@ status.textContent="This creator's video is not available yet.";
 area.classList.add("show");
 return;
 }
-stopCreatorVideo(false);
+if(availableViewingSeconds()<=0){
+status.className="video-status error";
+status.textContent="Insufficient minutes — Buy Minutes";
+area.classList.add("show");
+return;
+}
+const previousSessionStopped=await stopCreatorVideo(false);
+if(!previousSessionStopped){
+status.className="video-status error";
+status.textContent="Could not finish syncing the previous video session. Try again.";
+area.classList.add("show");
+return;
+}
 activeCreatorVideo=currentCreator;
+pendingVideoSeconds=0;
+pendingVideoEvent=null;
+pendingVideoSessionId=null;
 lastVideoTime=0;
-video.src=url;
 document.getElementById("videoCreatorName").textContent=currentCreator.name;
 updateVideoMinutes();
 status.className="video-status";
-status.textContent="Loading video...";
+status.textContent="Starting video...";
 area.classList.add("show");
 addActivity("Started video · "+currentCreator.name);
-video.play().catch(()=>{
+try{
+const session=await enqueueVideoEvent({action:"start",creator:currentCreator.name});
+activeVideoSessionId=session.video_session_id;
+video.src=url;
+status.textContent="Loading video...";
+await video.play();
+}catch(error){
 status.className="video-status";
 status.textContent="Tap the video to start playback. Viewing minutes are used only while it plays.";
-});
+if(activeVideoSessionId)enqueueVideoEvent({action:"pause",video_session_id:activeVideoSessionId}).catch(()=>{});
+}
 }
 function handleCreatorTimeUpdate(){
 const video=document.getElementById("creatorVideo");
-if(!activeCreatorVideo||!video||video.paused||video.ended||video.readyState<2)return;
+if(!activeCreatorVideo||!activeVideoSessionId||!video||video.paused||video.ended||video.readyState<2)return;
 const delta=video.currentTime-lastVideoTime;
 lastVideoTime=video.currentTime;
-if(delta>0&&delta<2)viewingSecondsUsed+=delta;
-saveViewingSeconds();
+if(delta>0&&delta<2){
+const chargedDelta=Math.min(delta,balanceSeconds);
+pendingVideoSessionId=activeVideoSessionId;
+pendingVideoSeconds+=chargedDelta;
+balanceSeconds=Math.max(0,balanceSeconds-chargedDelta);
+updateMinutes();
+if(pendingVideoSeconds>=10)flushPendingVideoUsage().catch(()=>{
+video.pause();
+document.getElementById("videoStatus").textContent="Connection issue — playback paused.";
+});
+}
 updateVideoMinutes();
 if(availableViewingSeconds()<=0){
 video.pause();
@@ -457,11 +518,34 @@ status.textContent="Insufficient minutes — Buy Minutes";
 addActivity("Insufficient minutes · "+activeCreatorVideo.name);
 }
 }
+function handleCreatorPlay(){
+if(!activeVideoSessionId)return;
+const id=activeVideoSessionId;
+enqueueVideoEvent({action:"resume",video_session_id:id}).catch(()=>{
+const video=document.getElementById("creatorVideo");if(video)video.pause();
+document.getElementById("videoStatus").textContent="Playback could not be authorized.";
+});
+}
 function handleCreatorPauseOrEnd(){
 const video=document.getElementById("creatorVideo");
 if(video)lastVideoTime=video.currentTime;
-saveViewingSeconds();
-if(video&&video.ended&&activeCreatorVideo){
+if(video&&video.ended)return;
+const id=activeVideoSessionId;
+if(!id)return;
+flushPendingVideoUsage(id).then(()=>{
+if(activeVideoSessionId===id)return enqueueVideoEvent({action:"pause",video_session_id:id});
+}).catch(()=>{
+document.getElementById("videoStatus").textContent="Usage could not be synchronized.";
+});
+}
+function handleCreatorEnded(){
+const id=activeVideoSessionId;
+if(id){
+activeVideoSessionId=null;
+pendingVideoStopSessionId=id;
+stopVideoSession(id);
+}
+if(activeCreatorVideo){
 addActivity("Finished video · "+activeCreatorVideo.name);
 const status=document.getElementById("videoStatus");
 status.className="video-status";
@@ -471,16 +555,16 @@ status.textContent="Video ended. Choose another creator or buy more minutes.";
 function handleCreatorError(){
 const status=document.getElementById("videoStatus");
 status.className="video-status error";
-status.textContent="This video could not load. Please try again later. No viewing minutes were used.";
-}
-function stopCreatorVideo(recordActivity=true){
+status.textContent="Playback stopped. No additional minutes will be used.";
 const video=document.getElementById("creatorVideo");
+if(video&&!video.paused)video.pause();
+}
+async function stopCreatorVideo(recordActivity=true){
+const video=document.getElementById("creatorVideo");
+const sessionId=activeVideoSessionId||pendingVideoStopSessionId||pendingVideoSessionId;
+activeVideoSessionId=null;
 if(video){
 video.pause();
-video.removeEventListener("timeupdate",handleCreatorTimeUpdate);
-video.removeEventListener("pause",handleCreatorPauseOrEnd);
-video.removeEventListener("ended",handleCreatorPauseOrEnd);
-video.removeEventListener("error",handleCreatorError);
 video.removeAttribute("src");
 video.load();
 }
@@ -490,6 +574,7 @@ lastVideoTime=0;
 document.getElementById("callVideoArea").classList.remove("show");
 const status=document.getElementById("videoStatus");
 status.className="video-status";status.textContent="";
+return stopVideoSession(sessionId);
 }
 function updateVideoMinutes(){
 const remainingMinutes=Math.max(0,Math.ceil(availableViewingSeconds()/60));
@@ -628,8 +713,8 @@ if(["paid","confirmed","success","completed"].includes(status)){
 const meResponse=await fetch("/api/me",{credentials:"include"});
 if(meResponse.ok){
 const me=await meResponse.json();
-const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
-if(Number.isFinite(balance))minutesBalance=balance;
+const balance=Number(me.balance_seconds);
+if(Number.isFinite(balance))balanceSeconds=Math.max(0,balance);
 }
 updateMinutes();
 document.getElementById("authMessage").textContent="Payment confirmed. Your minutes balance has been refreshed.";
@@ -646,13 +731,14 @@ paymentTimer=setTimeout(()=>checkPayment(pkg),4000);
 async function refreshMember(){
 try{
 const response=await fetch("/api/me",{credentials:"include"});if(!response.ok)return;
-const me=await response.json();const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
-if(Number.isFinite(balance))minutesBalance=balance;
+const me=await response.json();const balance=Number(me.balance_seconds);
+if(Number.isFinite(balance))balanceSeconds=Math.max(0,balance);
 if(me.name||me.full_name)memberName=me.name||me.full_name;
 updateMinutes();renderProfile();
 }catch(e){}
 }
 function updateMinutes(){
+minutesBalance=Math.ceil(Math.max(0,balanceSeconds)/60);
 document.getElementById("minutesHeader").textContent=minutesBalance+" min";
 document.getElementById("minutesProfile").textContent=minutesBalance;
 updateVideoMinutes();
@@ -677,10 +763,10 @@ window.addEventListener("pagehide",()=>{stopCreatorVideo(false);});
 function bindCreatorVideoEvents(){
 const video=document.getElementById("creatorVideo");
 video.addEventListener("loadedmetadata",()=>{lastVideoTime=video.currentTime;});
-video.addEventListener("play",()=>{lastVideoTime=video.currentTime;});
+video.addEventListener("play",()=>{lastVideoTime=video.currentTime;handleCreatorPlay();});
 video.addEventListener("timeupdate",handleCreatorTimeUpdate);
 video.addEventListener("pause",handleCreatorPauseOrEnd);
-video.addEventListener("ended",handleCreatorPauseOrEnd);
+video.addEventListener("ended",handleCreatorEnded);
 video.addEventListener("error",handleCreatorError);
 }
 
