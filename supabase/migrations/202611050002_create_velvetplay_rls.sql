@@ -11,7 +11,7 @@ drop policy if exists "service_role_all_access_vp_members" on public.vp_members;
 drop policy if exists "service_role_all_access_vp_payments" on public.vp_payments;
 drop policy if exists "service_role_all_access_vp_ledger" on public.vp_ledger;
 
-revoke all on table public.vp_members from anon, authenticated;
-revoke all on table public.vp_payments from anon, authenticated;
-revoke all on table public.vp_ledger from anon, authenticated;
-revoke all on table public.vp_video_sessions from anon, authenticated;
+revoke all on table public.vp_members from public, anon, authenticated;
+revoke all on table public.vp_payments from public, anon, authenticated;
+revoke all on table public.vp_ledger from public, anon, authenticated;
+revoke all on table public.vp_video_sessions from public, anon, authenticated;

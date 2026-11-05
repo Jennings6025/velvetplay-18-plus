@@ -347,7 +347,7 @@ test('migrations preserve existing tables, deny browser access, and encode atomi
   assert.match(core, /revoke all on function[\s\S]*from public, anon, authenticated/i);
   assert.doesNotMatch(rls, /create policy/i);
   assert.match(rls, /drop policy if exists "vp_members_update_own"/i);
-  assert.match(rls, /revoke all on table public\.vp_ledger from anon, authenticated/i);
+  assert.match(rls, /revoke all on table public\.vp_ledger from public, anon, authenticated/i);
   for (const table of ['vp_members', 'vp_payments', 'vp_ledger', 'vp_video_sessions']) {
     assert.match(rls, new RegExp(`alter table public\\.${table} enable row level security`, 'i'));
   }
