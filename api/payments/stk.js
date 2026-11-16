@@ -1,6 +1,8 @@
+
 const crypto = require('crypto');
 const store = require('../../lib/supabase');
 const { normalizeKenyanPhone, isValidKenyanPhone } = require('../../lib/phone');
+
 const {
   getDarajaToken,
   getDarajaBaseUrl,
@@ -24,49 +26,110 @@ function createStkHandler({
 } = {}) {
   return async (req, res) => {
     let paymentId = null;
+
     try {
       if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({
+          error: 'Method not allowed'
+        });
       }
 
-      const member = await db.getMemberBySessionToken(req.cookies?.vp_session);
-      if (!member) return res.status(401).json({ error: 'No active session' });
+      const member = await db.getMemberBySessionToken(
+        req.cookies?.vp_session
+      );
+
+      if (!member) {
+        return res.status(401).json({
+          error: 'No active session'
+        });
+      }
 
       const { phone, amount, minutes } = req.body || {};
+
       const normalizedPhone = normalizeKenyanPhone(phone);
       const numericAmount = Number(amount);
       const numericMinutes = Number(minutes);
+
       const expectedPrice = PACKAGE_PRICES[numericMinutes];
 
       if (!normalizedPhone || !isValidKenyanPhone(normalizedPhone)) {
-        return res.status(400).json({ error: 'Invalid M-Pesa phone number' });
+        return res.status(400).json({
+          error: 'Invalid M-Pesa phone number'
+        });
       }
+
       if (!Number.isInteger(numericMinutes) || !expectedPrice) {
-        return res.status(400).json({ error: 'Unsupported package' });
-      }
-      if (!Number.isInteger(numericAmount) || expectedPrice !== numericAmount) {
-        return res.status(400).json({ error: 'Package amount mismatch' });
-      }
-
-      const env = process.env.MPESA_ENVIRONMENT || 'sandbox';
-      if (!['sandbox', 'production'].includes(env)) {
-        return res.status(500).json({ error: 'Invalid M-Pesa environment configuration' });
+        return res.status(400).json({
+          error: 'Unsupported package'
+        });
       }
 
-      const shortcode = process.env.MPESA_TILL_NUMBER || process.env.MPESA_SHORTCODE;
+      if (
+        !Number.isInteger(numericAmount) ||
+        numericAmount !== expectedPrice
+      ) {
+        return res.status(400).json({
+          error: 'Package amount mismatch'
+        });
+      }
+
+      // Production configuration only.
+      const environment = String(
+        process.env.MPESA_ENVIRONMENT || ''
+      ).trim().toLowerCase();
+
+      if (environment !== 'production') {
+        return res.status(503).json({
+          error: 'Production M-Pesa is not configured'
+        });
+      }
+
+      // VelvetPlay Safaricom merchant identifiers.
+      const businessShortCode = process.env.MPESA_SHORTCODE;
+      const tillNumber = process.env.MPESA_TILL_NUMBER;
       const callbackUrl = process.env.MPESA_CALLBACK_URL;
       const passkey = process.env.MPESA_PASSKEY;
-      if (!shortcode || !callbackUrl || !passkey) {
-        return res.status(500).json({ error: 'M-Pesa merchant configuration is incomplete' });
+
+      if (
+        businessShortCode !== '8417067' ||
+        tillNumber !== '6918611' ||
+        !callbackUrl ||
+        !passkey
+      ) {
+        return res.status(503).json({
+          error: 'Production merchant configuration is incomplete'
+        });
       }
 
-      const token = await tokenProvider();
+      let callback;
+
+      try {
+        callback = new URL(callbackUrl);
+      } catch {
+        return res.status(503).json({
+          error: 'Invalid M-Pesa callback URL'
+        });
+      }
+
+      if (callback.protocol !== 'https:') {
+        return res.status(503).json({
+          error: 'M-Pesa callback must use HTTPS'
+        });
+      }
+
       const timestamp = getDarajaTimestamp();
-      const password = buildPassword(shortcode, passkey, timestamp);
-      const transactionType = process.env.MPESA_TRANSACTION_TYPE ||
-        (process.env.MPESA_TILL_NUMBER ? 'CustomerBuyGoodsOnline' : 'CustomerPayBillOnline');
+
+      const password = buildPassword(
+        businessShortCode,
+        passkey,
+        timestamp
+      );
+
+      const token = await tokenProvider();
 
       paymentId = crypto.randomUUID();
+
+      // Save pending payment before requesting STK Push.
       await db.createPayment({
         id: paymentId,
         member_id: member.id,
@@ -77,7 +140,7 @@ function createStkHandler({
       });
 
       const response = await fetchImpl(
-        `${getDarajaBaseUrl(env)}/mpesa/stkpush/v1/processrequest`,
+        `${getDarajaBaseUrl('production')}/mpesa/stkpush/v1/processrequest`,
         {
           method: 'POST',
           headers: {
@@ -85,31 +148,53 @@ function createStkHandler({
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            BusinessShortCode: shortcode,
+            BusinessShortCode: businessShortCode,
             Password: password,
             Timestamp: timestamp,
-            TransactionType: transactionType,
+            TransactionType: 'CustomerBuyGoodsOnline',
             Amount: numericAmount,
             PartyA: normalizedPhone,
-            PartyB: shortcode,
+            PartyB: tillNumber,
             PhoneNumber: normalizedPhone,
             CallBackURL: callbackUrl,
             AccountReference: 'VelvetPlay',
             TransactionDesc: 'VelvetPlay minutes'
-          })
+          }),
+          signal: AbortSignal.timeout(20000)
         }
       );
+
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || !data.CheckoutRequestID) {
-        await db.markPaymentRequestFailed(paymentId, data.errorMessage || 'STK request was rejected');
-        return res.status(400).json({ error: 'Could not start M-Pesa payment' });
+        await db.markPaymentRequestFailed(
+          paymentId,
+          data.errorMessage || 'Safaricom rejected the STK request'
+        );
+
+        return res.status(502).json({
+          error: 'Safaricom could not initiate the payment'
+        });
       }
 
-      await db.attachCheckoutRequest(paymentId, data.CheckoutRequestID, data.MerchantRequestID || null);
-      return res.status(200).json({ payment_id: paymentId, status: 'pending' });
+      await db.attachCheckoutRequest(
+        paymentId,
+        data.CheckoutRequestID,
+        data.MerchantRequestID || null
+      );
+
+      return res.status(200).json({
+        payment_id: paymentId,
+        status: 'pending',
+        message: 'M-Pesa payment request initiated'
+      });
+
     } catch (error) {
-      return res.status(500).json({ error: 'Payment service error' });
+      console.error('M-Pesa STK initiation error:', error.message);
+
+      return res.status(500).json({
+        error: 'Payment service temporarily unavailable'
+      });
     }
   };
 }
