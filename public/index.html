@@ -11,7 +11,7 @@
 html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif}
 body{background:var(--bg);color:#fff;-webkit-tap-highlight-color:transparent}
 button,input{font:inherit}button{cursor:pointer}
-.app{max-width:480px;min-height:100vh;margin:auto;padding-bottom:83px;background:linear-gradient(180deg,#190d23,#100819)}
+.app{max-width:480px;min-height:100vh;min-height:100dvh;margin:auto;padding-bottom:calc(83px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#190d23,#100819)}
 header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 13px;background:#150a20f5;backdrop-filter:blur(15px);border-bottom:1px solid #ffffff12}
 .brand{font-size:22px;font-weight:900;letter-spacing:-1px;white-space:nowrap}.brand span{color:var(--pink)}
 .header-right{display:flex;align-items:center;gap:7px}
@@ -115,8 +115,8 @@ header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-c
 #page-packages .message{margin:12px 13px;color:#333}
 #page-packages .back-packages{margin:20px 13px 0;width:calc(100% - 26px);border:0;border-radius:12px;background:#191a30;color:#fff;padding:13px}
 
-/* New checkout screens, styled to match your screenshots */
-.pay-page{display:none;position:fixed;inset:0;z-index:40;overflow-y:auto;background:radial-gradient(ellipse at top right,#10251d 0%,transparent 42%),#0b0b10;color:#f6f3fa;padding:0 24px calc(25px + env(safe-area-inset-bottom));}
+/* Checkout screens */
+.pay-page{display:none;position:fixed;inset:0;z-index:40;overflow-y:auto;background:radial-gradient(ellipse at top right,#10251d 0%,transparent 42%),#0b0b10;color:#f6f3fa;padding:0 24px calc(25px + env(safe-area-inset-bottom))}
 .pay-page.show{display:block}
 .pay-head{height:91px;display:flex;align-items:center;justify-content:center;position:relative;font-size:29px;font-weight:800;letter-spacing:-.5px}
 .pay-back{position:absolute;left:0;top:7px;width:65px;height:77px;border:1px solid #ffffff16;border-radius:23px;background:#1b1b20;color:#fff;font-size:34px}
@@ -150,10 +150,107 @@ header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-c
 .auth-card .green-button{margin-top:28px}
 .small-note{text-align:center;color:#777780;font-size:12px;line-height:1.6;margin-top:18px}
 .pay-message{font-size:14px;line-height:1.6;text-align:center;margin:16px 0;color:#ddd}
+
+/* Responsive layout */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.call-screen,.promo-screen,.pay-page{width:100%;max-width:480px;left:50%;right:auto;transform:translateX(-50%)}
+@media(max-width:600px){
+ .app{width:100%;max-width:480px}
+ .creator-photo{height:clamp(175px,52vw,235px)}
+ .package-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 10px}
+ .package-card{border-radius:19px}
+ .package-top{height:155px;padding:20px 4px 12px}
+ .package-camera{width:62px;height:62px;margin-bottom:17px}
+ .package-camera svg{width:30px;height:30px}
+ .package-minutes{font-size:17px}
+ .hot-badge{top:10px;padding:7px 8px;font-size:10px}
+ .package-price{min-height:90px;padding:12px 3px;gap:9px}
+ .package-ksh{font-size:17px}
+ .package-usd{font-size:12px}
+ .packages-head{padding:22px 14px 17px}
+ .sheet-handle{margin-bottom:25px}
+ .packages-title{font-size:25px;margin-bottom:12px}
+ .packages-subtitle{font-size:14px;margin-bottom:20px}
+ .sheet-close{top:65px;right:12px;width:38px;height:38px;font-size:22px}
+ .pay-page{padding-left:16px;padding-right:16px}
+ .pay-head{height:68px;font-size:23px}
+ .pay-back{top:7px;width:45px;height:48px;border-radius:15px;font-size:27px}
+ .pay-card{margin-top:16px;padding:20px 16px;border-radius:23px}
+ .pay-label{font-size:13px;letter-spacing:2px;margin-bottom:20px}
+ .minutes-pill{min-height:72px;gap:12px;font-size:clamp(21px,6vw,30px);border-radius:20px}
+ .minutes-pill svg{width:28px;height:28px}
+ .method-title{font-size:17px;margin-bottom:20px}
+ .method{min-height:76px;padding:12px 14px;margin-bottom:13px;border-radius:20px;font-size:18px;border-width:2px}
+ .method-logo{font-size:18px}
+ .paypal-logo{font-size:25px}
+ .radio{width:30px;height:30px;border-width:2px}
+ .method.selected .radio:after{width:13px;height:13px}
+ .pay-bottom{margin-top:22px}
+ .total-row{font-size:15px;margin-bottom:17px}
+ .total-price{font-size:clamp(22px,7vw,32px)}
+ .green-button{min-height:60px;border-radius:19px;font-size:20px}
+ .amount-due{font-size:13px;letter-spacing:3px;margin-top:30px}
+ .amount-big{font-size:clamp(34px,10vw,48px);margin:12px 0 25px}
+ .phone-box{padding:18px 13px;border-radius:22px}
+ .phone-input-wrap{min-height:65px;padding:0 13px;border-radius:20px}
+ .phone-prefix,.phone-input{font-size:17px}
+ .format-note{font-size:13px;margin:20px 0}
+ .auth-card{margin-top:16px;padding:18px 15px;border-radius:23px}
+ .auth-step{gap:13px;padding:15px 0;font-size:15px;line-height:1.5}
+ .auth-dot{width:12px;height:12px;min-width:12px;margin-top:6px}
+ .auth-card .green-button{margin-top:17px}
+ .small-note{font-size:11px}
+ .call-content{padding-left:14px;padding-right:14px}
+ .call-middle{top:14%}
+ .avatar-wrap,.call-avatar{width:112px;height:112px}
+ .avatar-wrap{margin-bottom:30px}
+ .call-name{font-size:26px;margin-bottom:12px}
+ .ringing{margin-top:22px;font-size:14px}
+ .call-bottom{bottom:calc(20px + env(safe-area-inset-bottom))}
+ .call-actions{gap:clamp(55px,18vw,90px);margin-bottom:14px}
+ .call-action-wrap{gap:13px}
+ .call-action{width:clamp(82px,23vw,105px);height:clamp(82px,23vw,105px)}
+ .call-action svg{width:40px;height:40px}
+ .call-action-label{font-size:13px}
+ .swipe-text{font-size:11px;margin-top:25px}
+}
 @media(max-width:370px){
- .creator-photo{height:215px}.package-grid{gap:8px;padding:0 8px}.package-top{height:190px;padding-top:31px}.package-camera{width:67px;height:67px;margin-bottom:32px}.package-camera svg{width:32px;height:32px}.package-price{min-height:110px;gap:16px}
- .call-middle{top:17%}.avatar-wrap{margin-bottom:43px}.call-name{font-size:28px}.call-actions{gap:55px}.call-action{width:112px;height:112px}.call-action svg{width:45px;height:45px}.call-action-wrap{gap:19px}.swipe-text{margin-top:47px}
- .pay-page{padding-left:18px;padding-right:18px}.pay-card,.auth-card{padding:23px 17px}.method{padding:15px 16px;font-size:21px}.minutes-pill{gap:10px;font-size:25px}.total-row{font-size:15px}
+ .creator-photo{height:190px}
+ .package-grid{gap:8px;padding:0 8px}
+ .package-top{height:140px;padding-top:17px}
+ .package-camera{width:54px;height:54px;margin-bottom:15px}
+ .package-camera svg{width:27px;height:27px}
+ .package-price{min-height:82px;gap:7px}
+ .package-ksh{font-size:15px}
+ .package-usd{font-size:11px}
+ .pay-page{padding-left:12px;padding-right:12px}
+ .pay-card,.auth-card{padding:17px 12px}
+ .method{padding:11px 10px;font-size:16px}
+ .minutes-pill{gap:8px;font-size:22px}
+ .total-row{font-size:13px}
+ .phone-prefix,.phone-input{font-size:15px}
+ .call-actions{gap:45px}
+}
+@media(max-height:760px) and (max-width:600px){
+ .call-middle{top:10%}
+ .avatar-wrap,.call-avatar{width:95px;height:95px}
+ .avatar-wrap{margin-bottom:20px}
+ .call-name{font-size:23px;margin-bottom:8px}
+ .ringing{margin-top:14px}
+ .call-action{width:78px;height:78px}
+ .call-action svg{width:34px;height:34px}
+ .call-action-wrap{gap:9px}
+ .swipe-text{margin-top:15px}
+ .call-actions{margin-bottom:8px}
+}
+@media(max-height:520px){
+ .call-label,.swipe-text{display:none}
+ .call-middle{top:7%}
+ .avatar-wrap,.call-avatar{width:76px;height:76px}
+ .avatar-wrap{margin-bottom:12px}
+ .call-action{width:65px;height:65px}
+ .call-action svg{width:30px;height:30px}
+ .ringing{display:none}
 }
 </style>
 </head>
@@ -327,30 +424,68 @@ const creatorVideoUrls={
 
 const freePromoVideoUrl="https://www.dropbox.com/scl/fi/py52hhs4iiv0r0e1aly2z/free-video.mp4?rlkey=y10db53ig6ja4cecrh3anvclj&st=nbufx4pj&raw=1";
 const PROMO_WATCHED_KEY="velvetplay_free_promo_watched";
-const VIEWING_SECONDS_KEY="velvetplay_viewing_seconds_used";
 
 const packages=[
 {minutes:35,price:100,hot:true},{minutes:50,price:150},{minutes:70,price:200},
 {minutes:100,price:250},{minutes:130,price:300},{minutes:160,price:350}
 ];
 
-let currentCreator=null,minutesBalance=0,memberName="Guest Member";
+let currentCreator=null,minutesBalance=0,balanceSeconds=0,memberName="Guest Member";
 let currentPaymentId=null,paymentTimer=null,selectedPackage=null,selectedMethod="mpesa",paymentInProgress=false;
 const activity=[];
 
 let activeCreatorVideo=null;
+let activeVideoSessionId=null;
+let pendingVideoSessionId=null;
+let pendingVideoStopSessionId=null;
 let lastVideoTime=0;
-let viewingSecondsUsed=Number(localStorage.getItem(VIEWING_SECONDS_KEY)||"0");
-if(!Number.isFinite(viewingSecondsUsed)||viewingSecondsUsed<0)viewingSecondsUsed=0;
+let pendingVideoSeconds=0;
+let pendingVideoEvent=null;
+let videoRequestQueue=Promise.resolve();
 
 function creatorKey(name){return String(name||"").replace(/[^A-Za-z]/g,"");}
-function availableViewingSeconds(){return Math.max(0,minutesBalance*60-viewingSecondsUsed);}
-function persistViewingSeconds(){try{localStorage.setItem(VIEWING_SECONDS_KEY,String(viewingSecondsUsed));}catch(e){}}
-function saveViewingSeconds(){
-const before=Math.floor(viewingSecondsUsed/60);
-persistViewingSeconds();
-const after=Math.floor(viewingSecondsUsed/60);
-if(after!==before){updateMinutes();renderProfile();}
+function availableViewingSeconds(){return Math.max(0,balanceSeconds);}
+function enqueueVideoEvent(event){
+const run=async()=>{
+const response=await fetch("/api/video/usage",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(event)});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.error||"Could not update video usage.");
+if(Number.isFinite(Number(data.balance_seconds)))balanceSeconds=Math.max(0,Number(data.balance_seconds)-pendingVideoSeconds);
+updateMinutes();
+return data;
+};
+const next=videoRequestQueue.then(run,run);
+videoRequestQueue=next.catch(()=>{});
+return next;
+}
+function flushPendingVideoUsage(sessionId=activeVideoSessionId){
+if(!sessionId)return Promise.resolve();
+if(pendingVideoSessionId&&pendingVideoSessionId!==sessionId)return Promise.reject(new Error("Video usage belongs to another session."));
+if(!pendingVideoEvent){
+const seconds=Math.min(15,Math.floor(pendingVideoSeconds));
+if(seconds<1)return videoRequestQueue;
+pendingVideoSeconds-=seconds;
+pendingVideoSessionId=sessionId;
+pendingVideoEvent={action:"usage",video_session_id:sessionId,seconds:seconds,idempotency_key:crypto.randomUUID()};
+}
+const event=pendingVideoEvent;
+return enqueueVideoEvent(event).then(()=>{
+if(pendingVideoEvent===event)pendingVideoEvent=null;
+if(pendingVideoSeconds>=1)return flushPendingVideoUsage(sessionId);
+if(!pendingVideoEvent)pendingVideoSessionId=null;
+});
+}
+async function stopVideoSession(sessionId){
+if(!sessionId)return true;
+try{
+await flushPendingVideoUsage(sessionId);
+await enqueueVideoEvent({action:"stop",video_session_id:sessionId});
+if(pendingVideoStopSessionId===sessionId)pendingVideoStopSessionId=null;
+return true;
+}catch(error){
+pendingVideoStopSessionId=sessionId;
+return false;
+}
 }
 
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -359,7 +494,7 @@ const cameraSvg='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 13a4 4 
 function cardMarkup(c){
 const i=creators.indexOf(c);
 return `<article class="creator-card"><img class="creator-photo" src="${driveImage(c.image)}" alt="${escapeHtml(c.name)}" loading="lazy" onerror="this.onerror=null;this.src='https://drive.google.com/uc?export=view&id=${encodeURIComponent(c.image)}'">
-${c.online?'<div class="live"><span class="dot online"></span> LIVE</div>':''}<span class="age">${c.age}+</span>
+${c.online?'<div class="live"><span class="dot online"></span> LIVE</div>':''}<span class="age">${c.age}</span>
 <div class="card-info"><div class="creator-name">${escapeHtml(c.name)}</div><div class="creator-meta"><span class="dot ${c.online?'online':'offline'}"></span>${c.online?'Online':'Offline'} · ${c.flag} ${c.country}</div></div>
 <button class="camera" aria-label="Call ${escapeHtml(c.name)}" onclick="startCall(${i})">${cameraSvg}</button></article>`;
 }
@@ -406,7 +541,7 @@ const name=currentCreator?currentCreator.name:"Creator";closeCall();addActivity(
 showPage("packages");document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
 }
 
-function openCreatorVideo(){
+async function openCreatorVideo(){
 if(!currentCreator)return;
 const key=creatorKey(currentCreator.name);
 const url=creatorVideoUrls[key];
@@ -419,28 +554,58 @@ status.textContent="This creator's video is not available yet.";
 area.classList.add("show");
 return;
 }
-stopCreatorVideo(false);
+if(availableViewingSeconds()<=0){
+status.className="video-status error";
+status.textContent="Insufficient minutes — Buy Minutes";
+area.classList.add("show");
+return;
+}
+const previousSessionStopped=await stopCreatorVideo(false);
+if(!previousSessionStopped){
+status.className="video-status error";
+status.textContent="Could not finish syncing the previous video session. Try again.";
+area.classList.add("show");
+return;
+}
 activeCreatorVideo=currentCreator;
+pendingVideoSeconds=0;
+pendingVideoEvent=null;
+pendingVideoSessionId=null;
 lastVideoTime=0;
-video.src=url;
 document.getElementById("videoCreatorName").textContent=currentCreator.name;
 updateVideoMinutes();
 status.className="video-status";
-status.textContent="Loading video...";
+status.textContent="Starting video...";
 area.classList.add("show");
 addActivity("Started video · "+currentCreator.name);
-video.play().catch(()=>{
+try{
+const session=await enqueueVideoEvent({action:"start",creator:currentCreator.name});
+activeVideoSessionId=session.video_session_id;
+video.src=url;
+status.textContent="Loading video...";
+await video.play();
+}catch(error){
 status.className="video-status";
 status.textContent="Tap the video to start playback. Viewing minutes are used only while it plays.";
-});
+if(activeVideoSessionId)enqueueVideoEvent({action:"pause",video_session_id:activeVideoSessionId}).catch(()=>{});
+}
 }
 function handleCreatorTimeUpdate(){
 const video=document.getElementById("creatorVideo");
-if(!activeCreatorVideo||!video||video.paused||video.ended||video.readyState<2)return;
+if(!activeCreatorVideo||!activeVideoSessionId||!video||video.paused||video.ended||video.readyState<2)return;
 const delta=video.currentTime-lastVideoTime;
 lastVideoTime=video.currentTime;
-if(delta>0&&delta<2)viewingSecondsUsed+=delta;
-saveViewingSeconds();
+if(delta>0&&delta<2){
+const chargedDelta=Math.min(delta,balanceSeconds);
+pendingVideoSessionId=activeVideoSessionId;
+pendingVideoSeconds+=chargedDelta;
+balanceSeconds=Math.max(0,balanceSeconds-chargedDelta);
+updateMinutes();
+if(pendingVideoSeconds>=10)flushPendingVideoUsage().catch(()=>{
+video.pause();
+document.getElementById("videoStatus").textContent="Connection issue — playback paused.";
+});
+}
 updateVideoMinutes();
 if(availableViewingSeconds()<=0){
 video.pause();
@@ -450,11 +615,34 @@ status.textContent="Insufficient minutes — Buy Minutes";
 addActivity("Insufficient minutes · "+activeCreatorVideo.name);
 }
 }
+function handleCreatorPlay(){
+if(!activeVideoSessionId)return;
+const id=activeVideoSessionId;
+enqueueVideoEvent({action:"resume",video_session_id:id}).catch(()=>{
+const video=document.getElementById("creatorVideo");if(video)video.pause();
+document.getElementById("videoStatus").textContent="Playback could not be authorized.";
+});
+}
 function handleCreatorPauseOrEnd(){
 const video=document.getElementById("creatorVideo");
 if(video)lastVideoTime=video.currentTime;
-saveViewingSeconds();
-if(video&&video.ended&&activeCreatorVideo){
+if(video&&video.ended)return;
+const id=activeVideoSessionId;
+if(!id)return;
+flushPendingVideoUsage(id).then(()=>{
+if(activeVideoSessionId===id)return enqueueVideoEvent({action:"pause",video_session_id:id});
+}).catch(()=>{
+document.getElementById("videoStatus").textContent="Usage could not be synchronized.";
+});
+}
+function handleCreatorEnded(){
+const id=activeVideoSessionId;
+if(id){
+activeVideoSessionId=null;
+pendingVideoStopSessionId=id;
+stopVideoSession(id);
+}
+if(activeCreatorVideo){
 addActivity("Finished video · "+activeCreatorVideo.name);
 const status=document.getElementById("videoStatus");
 status.className="video-status";
@@ -464,16 +652,16 @@ status.textContent="Video ended. Choose another creator or buy more minutes.";
 function handleCreatorError(){
 const status=document.getElementById("videoStatus");
 status.className="video-status error";
-status.textContent="This video could not load. Please try again later. No viewing minutes were used.";
-}
-function stopCreatorVideo(recordActivity=true){
+status.textContent="Playback stopped. No additional minutes will be used.";
 const video=document.getElementById("creatorVideo");
+if(video&&!video.paused)video.pause();
+}
+async function stopCreatorVideo(recordActivity=true){
+const video=document.getElementById("creatorVideo");
+const sessionId=activeVideoSessionId||pendingVideoStopSessionId||pendingVideoSessionId;
+activeVideoSessionId=null;
 if(video){
 video.pause();
-video.removeEventListener("timeupdate",handleCreatorTimeUpdate);
-video.removeEventListener("pause",handleCreatorPauseOrEnd);
-video.removeEventListener("ended",handleCreatorPauseOrEnd);
-video.removeEventListener("error",handleCreatorError);
 video.removeAttribute("src");
 video.load();
 }
@@ -483,6 +671,7 @@ lastVideoTime=0;
 document.getElementById("callVideoArea").classList.remove("show");
 const status=document.getElementById("videoStatus");
 status.className="video-status";status.textContent="";
+return stopVideoSession(sessionId);
 }
 function updateVideoMinutes(){
 const remainingMinutes=Math.max(0,Math.ceil(availableViewingSeconds()/60));
@@ -561,10 +750,11 @@ return;
 showPayScreen("paymentScreen");
 }
 function normalizeKenyanPhone(value){
-let n=String(value||"").replace(/D/g,"");
-if(n.startsWith("254")&&n.length===12)n=n.slice(3);
-if(n.startsWith("0")&&n.length===10)n=n.slice(1);
-if(/^[17]d{8}$/.test(n))return "254"+n;
+const compact=String(value||"").replace(/\s+/g,"").replace(/^\+/,"");
+if(!compact)return null;
+if(compact.startsWith("254")&&/^254[17]\d{8}$/.test(compact))return compact;
+if(compact.startsWith("0")&&/^0[17]\d{8}$/.test(compact))return "254"+compact.slice(1);
+if(/^[17]\d{8}$/.test(compact))return "254"+compact;
 return null;
 }
 function goToAuthorization(){
@@ -620,8 +810,8 @@ if(["paid","confirmed","success","completed"].includes(status)){
 const meResponse=await fetch("/api/me",{credentials:"include"});
 if(meResponse.ok){
 const me=await meResponse.json();
-const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
-if(Number.isFinite(balance))minutesBalance=balance;
+const balance=Number(me.balance_seconds);
+if(Number.isFinite(balance))balanceSeconds=Math.max(0,balance);
 }
 updateMinutes();
 document.getElementById("authMessage").textContent="Payment confirmed. Your minutes balance has been refreshed.";
@@ -638,13 +828,14 @@ paymentTimer=setTimeout(()=>checkPayment(pkg),4000);
 async function refreshMember(){
 try{
 const response=await fetch("/api/me",{credentials:"include"});if(!response.ok)return;
-const me=await response.json();const balance=Number(me.minutes_balance??me.minutes??me.balance_minutes);
-if(Number.isFinite(balance))minutesBalance=balance;
+const me=await response.json();const balance=Number(me.balance_seconds);
+if(Number.isFinite(balance))balanceSeconds=Math.max(0,balance);
 if(me.name||me.full_name)memberName=me.name||me.full_name;
 updateMinutes();renderProfile();
 }catch(e){}
 }
 function updateMinutes(){
+minutesBalance=Math.ceil(Math.max(0,balanceSeconds)/60);
 document.getElementById("minutesHeader").textContent=minutesBalance+" min";
 document.getElementById("minutesProfile").textContent=minutesBalance;
 updateVideoMinutes();
@@ -669,10 +860,10 @@ window.addEventListener("pagehide",()=>{stopCreatorVideo(false);});
 function bindCreatorVideoEvents(){
 const video=document.getElementById("creatorVideo");
 video.addEventListener("loadedmetadata",()=>{lastVideoTime=video.currentTime;});
-video.addEventListener("play",()=>{lastVideoTime=video.currentTime;});
+video.addEventListener("play",()=>{lastVideoTime=video.currentTime;handleCreatorPlay();});
 video.addEventListener("timeupdate",handleCreatorTimeUpdate);
 video.addEventListener("pause",handleCreatorPauseOrEnd);
-video.addEventListener("ended",handleCreatorPauseOrEnd);
+video.addEventListener("ended",handleCreatorEnded);
 video.addEventListener("error",handleCreatorError);
 }
 
