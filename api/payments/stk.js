@@ -1,7 +1,10 @@
 
 const crypto = require('crypto');
 const store = require('../../lib/supabase');
-const { normalizeKenyanPhone, isValidKenyanPhone } = require('../../lib/phone');
+const {
+  normalizeKenyanPhone,
+  isValidKenyanPhone
+} = require('../../lib/phone');
 
 const {
   getDarajaToken,
@@ -49,16 +52,21 @@ function createStkHandler({
       const normalizedPhone = normalizeKenyanPhone(phone);
       const numericAmount = Number(amount);
       const numericMinutes = Number(minutes);
-
       const expectedPrice = PACKAGE_PRICES[numericMinutes];
 
-      if (!normalizedPhone || !isValidKenyanPhone(normalizedPhone)) {
+      if (
+        !normalizedPhone ||
+        !isValidKenyanPhone(normalizedPhone)
+      ) {
         return res.status(400).json({
           error: 'Invalid M-Pesa phone number'
         });
       }
 
-      if (!Number.isInteger(numericMinutes) || !expectedPrice) {
+      if (
+        !Number.isInteger(numericMinutes) ||
+        !expectedPrice
+      ) {
         return res.status(400).json({
           error: 'Unsupported package'
         });
@@ -84,7 +92,7 @@ function createStkHandler({
         });
       }
 
-      // VelvetPlay Safaricom merchant identifiers.
+      // VelvetPlay production merchant details.
       const businessShortCode = process.env.MPESA_SHORTCODE;
       const tillNumber = process.env.MPESA_TILL_NUMBER;
       const callbackUrl = process.env.MPESA_CALLBACK_URL;
@@ -158,7 +166,7 @@ function createStkHandler({
             PhoneNumber: normalizedPhone,
             CallBackURL: callbackUrl,
             AccountReference: 'VelvetPlay',
-            TransactionDesc: 'VelvetPlay minutes'
+            TransactionDesc: 'VelvetPlay'
           }),
           signal: AbortSignal.timeout(20000)
         }
@@ -169,7 +177,8 @@ function createStkHandler({
       if (!response.ok || !data.CheckoutRequestID) {
         await db.markPaymentRequestFailed(
           paymentId,
-          data.errorMessage || 'Safaricom rejected the STK request'
+          data.errorMessage ||
+            'Safaricom rejected the STK request'
         );
 
         return res.status(502).json({
@@ -190,7 +199,10 @@ function createStkHandler({
       });
 
     } catch (error) {
-      console.error('M-Pesa STK initiation error:', error.message);
+      console.error(
+        'M-Pesa STK initiation error:',
+        error.message
+      );
 
       return res.status(500).json({
         error: 'Payment service temporarily unavailable'
