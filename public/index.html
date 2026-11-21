@@ -533,6 +533,7 @@ const packages=[
 ];
 
 let currentCreator=null,minutesBalance=0,balanceSeconds=0,memberName="Guest Member";
+let creatorVideoHistoryOpen=false;
 let currentPaymentId=null,paymentTimer=null,selectedPackage=null,selectedMethod="mpesa",paymentInProgress=false;
 const activity=[];
 
@@ -820,7 +821,11 @@ document.getElementById("callName").textContent=currentCreator.name;
 document.getElementById("callScreen").classList.add("show");document.body.style.overflow="hidden";
 addActivity("Incoming call · "+currentCreator.name);
 }
-function closeCall(){
+function closeCall(fromPopState=false){
+if(creatorVideoHistoryOpen){
+creatorVideoHistoryOpen=false;
+if(!fromPopState)history.back();
+}
 if(creatorPlayer)creatorPlayer.exitFs();
 stopCreatorVideo(false);
 document.getElementById("callScreen").classList.remove("show");document.body.style.overflow="";
@@ -857,6 +862,10 @@ status.className="video-status error";
 status.textContent="Could not finish syncing the previous video session. Try again.";
 area.classList.add("show");
 return;
+}
+if(!creatorVideoHistoryOpen){
+history.pushState({velvetPlayOverlay:"creator-video"},"", "#watching");
+creatorVideoHistoryOpen=true;
 }
 activeCreatorVideo=currentCreator;
 pendingVideoSeconds=0;
@@ -1153,6 +1162,9 @@ activity.unshift(new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digi
 if(activity.length>20)activity.pop();renderProfile();
 }
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCall();hidePayScreens();}});
+window.addEventListener("popstate",()=>{
+if(creatorVideoHistoryOpen)closeCall(true);
+});
 document.addEventListener("visibilitychange",()=>{
 const video=document.getElementById("creatorVideo");
 if(document.hidden&&video&&!video.paused)video.pause();
