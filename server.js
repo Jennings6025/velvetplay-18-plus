@@ -98,6 +98,11 @@ async function routeRequest(req, res) {
     return routeHandler(req, createResponse(res));
   }
 
+  // Match this fixed endpoint before the parameterized payment route.
+  if (pathname === '/api/payments/callback') {
+    return require('./api/payments/callback.js')(req, createResponse(res));
+  }
+
   const paymentMatch = pathname.match(/^\/api\/payments\/([^/]+)$/);
   if (paymentMatch) {
     req.params = { id: paymentMatch[1] };
@@ -105,14 +110,15 @@ async function routeRequest(req, res) {
     return require('./api/payments/[id].js')(req, createResponse(res));
   }
 
-  if (pathname === '/api/payments/callback') {
-    return require('./api/payments/callback.js')(req, createResponse(res));
-  }
-
   const safePath = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
-  const filePath = path.join(publicDir, safePath);
+  const filePath = path.resolve(publicDir, safePath);
+  const relativePath = path.relative(publicDir, filePath);
 
-  if (!filePath.startsWith(publicDir)) {
+  if (
+    relativePath === '..' ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath)
+  ) {
     res.statusCode = 403;
     res.end('Forbidden');
     return;
@@ -135,18 +141,24 @@ async function routeRequest(req, res) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
-  try {
-    await routeRequest(req, res);
-  } catch (error) {
-    console.error('Unhandled server error:', error);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({ error: 'Internal server error' }));
-  }
-});
+function createServer() {
+  return http.createServer(async (req, res) => {
+    try {
+      await routeRequest(req, res);
+    } catch (error) {
+      console.error('Unhandled server error:', error);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+  });
+}
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`VelvetPlay is running at http://localhost:${port}`);
-});
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  createServer().listen(port, () => {
+    console.log(`VelvetPlay is running at http://localhost:${port}`);
+  });
+}
+
+module.exports = { createServer, routeRequest };
