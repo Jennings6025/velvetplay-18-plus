@@ -447,7 +447,20 @@ video::-webkit-media-controls,video::-webkit-media-controls-overlay-play-button,
 <script>
 "use strict";
 
-function driveImage(id){return "https://drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w900";}
+function driveImage(id){
+const value=String(id||"").trim();
+if(/^https?:\/\//i.test(value)){
+  try{
+    const url=new URL(value);
+    if(url.hostname.endsWith("dropbox.com")){
+      url.searchParams.delete("dl");
+      url.searchParams.set("raw","1");
+    }
+    return url.toString();
+  }catch(_){return value;}
+}
+return "https://drive.google.com/thumbnail?id="+encodeURIComponent(value)+"&sz=w900";
+}
 
 const creators=[
 {name:"🤪 Emmah",age:20,country:"Kenya",flag:"🇰🇪",online:true,image:"1_jivIbRd4uxUfYGCKyBAG7lIYvmXzfS0"},
@@ -470,7 +483,14 @@ const creators=[
 {name:"🥵💦 Shantell",age:27,country:"Kenya",flag:"🇰🇪",online:true,image:"1vdUCTlw4spF6rSbgIkPVk1E6fSUJVf9B"},
 {name:"🥵💦 Joy",age:25,country:"Kenya",flag:"🇰🇪",online:true,image:"1CU5qzhKhaF0nWzFPDPAdaKtCq6E10GYU"},
 {name:"❤️ Amira",age:20,country:"Uganda",flag:"🇺🇬",online:false,image:"1LcIoAFMlM_vZp1Wz2M5nJnDBo4n4b3ul"},
-{name:"😜 Betty",age:18,country:"Kenya",flag:"🇰🇪",online:false,image:"1yfVRjp_LbOgTMEt7WtaK8Hpv58bi_xBN"}
+{name:"😜 Betty",age:18,country:"Kenya",flag:"🇰🇪",online:false,image:"1yfVRjp_LbOgTMEt7WtaK8Hpv58bi_xBN"},
+{name:"Kanini",age:25,country:"Kenya",flag:"🇰🇪",online:false,image:"https://www.dropbox.com/scl/fi/og2wnl8b2uhkukbm3dwac/Kanini.jpg?rlkey=evc939jq4y5zt0sbblrf3loj8&st=odd1dubt&raw=1"},
+{name:"Lizzy ❤️",age:29,country:"Uganda",flag:"🇺🇬",online:false,image:"https://www.dropbox.com/scl/fi/ipwxtx3mu61ew3938x4ko/IMG_20261121_053744_756.jpg?rlkey=33harr912vkr3jej71pduf3xk&st=oxtg7twe&raw=1"},
+{name:"Fabella 🥵",age:24,country:"Canada",flag:"🇨🇦",online:false,image:"https://www.dropbox.com/scl/fi/85tiqlyt23iyg0zauquis/IMG_20261121_053955_534.jpg?rlkey=005nhcb5zlra71ul9i90l5bgm&st=dnwonnh6&raw=1"},
+{name:"Nyxilla",age:27,country:"USA",flag:"🇺🇸",online:false,image:"https://www.dropbox.com/scl/fi/go0xbv6xa9lx2p537wjwz/IMG_20261121_053908_545.jpg?rlkey=3pnh5ox3nmf28e6wph8g8blpu&st=vhwuk5f1&raw=1"},
+{name:"Nanah",age:24,country:"Australia",flag:"🇦🇺",online:false,image:"https://www.dropbox.com/scl/fi/y7rkznn1yoxi9ldzwl0u1/IMG_20261121_053752_256.jpg?rlkey=jru79nmzlb8zmsdle7wbsyeik&st=wpwucxk2&raw=1"},
+{name:"Maximilla 🥵",age:29,country:"Canada",flag:"🇨🇦",online:false,image:"https://www.dropbox.com/scl/fi/59pl96ih4vuyvytzeoew4/IMG_20261121_053723_989.jpg?rlkey=oymglzdojzwl7sgsgzypaecrp&st=7onmfje9&raw=1"},
+{name:"Brixa",age:26,country:"USA",flag:"🇺🇸",online:false,image:"https://www.dropbox.com/scl/fi/sz509eg5eilz9ukki8bkj/IMG_20261121_053609_300.jpg?rlkey=l1e6181f4hwp6bkuk49m0w6i0&st=5wrch8el&raw=1"}
 ];
 
 const creatorVideoUrls={
@@ -494,7 +514,14 @@ const creatorVideoUrls={
 "Shantell":"https://www.dropbox.com/scl/fi/9hcb2391z9rz6pegqe9uo/Shantell.mp4?rlkey=7g0qno1rp51a4woem2krw3fgn&st=867t6wk7&raw=1",
 "Joy":"https://www.dropbox.com/scl/fi/nletkvbt8ic4gc6a3vxqq/Joy.mp4?rlkey=6uoelk0evtkovngouaub81ccd&st=7bxfldka&raw=1",
 "Amira":"https://www.dropbox.com/scl/fi/diyyw8912z1et6z1bqlcz/Amira.mp4?rlkey=jznhsqc6y550wfg3yw8p2exlw&st=koi4bf9o&raw=1",
-"Betty":"https://www.dropbox.com/scl/fi/pnxyjyn5qam74xbuoyxyu/Betty.mp4?rlkey=vhde0lyek07f4atydfvidk6jb&st=bm47brd4&raw=1"
+"Betty":"https://www.dropbox.com/scl/fi/pnxyjyn5qam74xbuoyxyu/Betty.mp4?rlkey=vhde0lyek07f4atydfvidk6jb&st=bm47brd4&raw=1",
+"Kanini":"https://www.dropbox.com/scl/fi/2rqar2c375rqs3pnr4tuv/Kanini.mp4?rlkey=u0sv42hmtk9k243fa2mbybr1n&st=0lossqfz&raw=1",
+"Lizzy":"https://www.dropbox.com/scl/fi/yct87mt6citalgzyf1plx/Lizzy.mp4?rlkey=x96r47xx0m8phquk2wpostp1j&st=prkn1fa0&raw=1",
+"Fabella":"https://www.dropbox.com/scl/fi/47molor88m8g33e76w5hg/Fabella.mp4?rlkey=ec6ubbundhtgv5l2lxo359vcl&st=2vmpt5e6&raw=1",
+"Nyxilla":"https://www.dropbox.com/scl/fi/xa16ucpdih8shnav7galg/Nyxilla.mp4?rlkey=51pnafsazwz145qslao12cvmr&st=4mu13jvk&raw=1",
+"Nanah":"https://www.dropbox.com/scl/fi/b1shuaa8y1q8vx52m014o/Nanah.mp4?rlkey=2jaccjj05rm7hq9u80c5lx8qk&st=jpkzsnc8&raw=1",
+"Maximilla":"https://www.dropbox.com/scl/fi/mmb9ueorb7nalby27px3d/Maximilla.mp4?rlkey=0aj2k8lns1xb59ho3l8ar8l6m&st=b2178cka&raw=1",
+"Brixa":"https://www.dropbox.com/scl/fi/zi0p1hiew4fvmq0nuoku6/Brixa.mp4?rlkey=yeyhxc2smf3ux8oibiw6t2701&st=oyin2sby&raw=1"
 };
 
 const freePromoVideoUrl="https://www.dropbox.com/scl/fi/py52hhs4iiv0r0e1aly2z/free-video.mp4?rlkey=y10db53ig6ja4cecrh3anvclj&st=nbufx4pj&raw=1";
