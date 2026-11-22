@@ -15,6 +15,7 @@ const {
 } = require('../../lib/daraja');
 
 const PACKAGE_PRICES = Object.freeze({
+  15: 50,
   35: 100,
   50: 150,
   70: 200,

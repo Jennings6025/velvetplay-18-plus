@@ -433,7 +433,7 @@ video::-webkit-media-controls,video::-webkit-media-controls-overlay-play-button,
 <div id="authorizeScreen" class="pay-page">
  <div class="pay-head"><button class="pay-back" onclick="showPayScreen('paymentScreen')" aria-label="Back">←</button><span style="font-size:clamp(19px,5vw,28px)">Authorize Payment</span></div>
  <div class="auth-card">
-  <div class="auth-step"><span class="auth-dot"></span><span>You will receive an M-Pesa prompt from <b>VELVET PLAY</b> of <b id="authAmount">KES 100</b></span></div>
+  <div class="auth-step"><span class="auth-dot"></span><span>You will receive an M-Pesa prompt from <b>Velvet Play</b> of <b id="authAmount">KES 100</b></span></div>
   <div class="auth-step"><span class="auth-dot"></span><span>Ensure your phone <b id="authPhone">2547XXXXXXXX</b> is active and reachable</span></div>
   <div class="auth-step"><span class="auth-dot"></span><span>Enter your M-Pesa PIN to authorize payment</span></div>
   <div class="auth-step"><span class="auth-dot"></span><span>Wait a few seconds while we confirm your transaction</span></div>
@@ -527,9 +527,15 @@ const creatorVideoUrls={
 const freePromoVideoUrl="https://www.dropbox.com/scl/fi/py52hhs4iiv0r0e1aly2z/free-video.mp4?rlkey=y10db53ig6ja4cecrh3anvclj&st=nbufx4pj&raw=1";
 const PROMO_WATCHED_KEY="velvetplay_free_promo_watched";
 
+
 const packages=[
-{minutes:35,price:100,hot:true},{minutes:50,price:150},{minutes:70,price:200},
-{minutes:100,price:250},{minutes:130,price:300},{minutes:160,price:350}
+{minutes:15,price:50,hot:true},
+{minutes:35,price:100},
+{minutes:50,price:150},
+{minutes:70,price:200},
+{minutes:100,price:250},
+{minutes:130,price:300},
+{minutes:160,price:350}
 ];
 
 let currentCreator=null,minutesBalance=0,balanceSeconds=0,memberName="Guest Member";
