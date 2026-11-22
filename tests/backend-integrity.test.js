@@ -1,4 +1,3 @@
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
@@ -309,7 +308,32 @@ test('payment package creation uses verified database columns and server-owned p
   });
 
   try {
-    const res = makeResponse();
+    // Verify the new KSh 50 / 15-minute package.
+    const smallestPackage = makeResponse();
+
+    await handler(
+      {
+        method: 'POST',
+        cookies: { vp_session: 'opaque-session-token' },
+        body: {
+          phone: '0712345678',
+          amount: 50,
+          minutes: 15
+        }
+      },
+      smallestPackage
+    );
+
+    assert.equal(smallestPackage.statusCode, 200);
+    assert.equal(stkCalls, 1);
+    assert.equal(inserted.length, 1);
+    assert.equal(inserted[0].amount_kes, 50);
+    assert.equal(inserted[0].minutes, 15);
+    assert.equal(inserted[0].seconds_credited, 900);
+    assert.equal(inserted[0].phone_number, '254712345678');
+
+    // Verify the existing KSh 100 / 35-minute package still works.
+    const existingPackage = makeResponse();
 
     await handler(
       {
@@ -321,15 +345,15 @@ test('payment package creation uses verified database columns and server-owned p
           minutes: 35
         }
       },
-      res
+      existingPackage
     );
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(stkCalls, 1);
-    assert.equal(inserted.length, 1);
+    assert.equal(existingPackage.statusCode, 200);
+    assert.equal(stkCalls, 2);
+    assert.equal(inserted.length, 2);
 
     assert.deepEqual(
-      Object.keys(inserted[0]).sort(),
+      Object.keys(inserted[1]).sort(),
       [
         'amount_kes',
         'id',
@@ -340,11 +364,13 @@ test('payment package creation uses verified database columns and server-owned p
       ].sort()
     );
 
-    assert.equal(inserted[0].amount_kes, 100);
-    assert.equal(inserted[0].phone_number, '254712345678');
-    assert.equal(inserted[0].seconds_credited, 2100);
-    assert.equal('session_id' in inserted[0], false);
+    assert.equal(inserted[1].amount_kes, 100);
+    assert.equal(inserted[1].minutes, 35);
+    assert.equal(inserted[1].phone_number, '254712345678');
+    assert.equal(inserted[1].seconds_credited, 2100);
+    assert.equal('session_id' in inserted[1], false);
 
+    // Reject a price that does not match the selected package.
     const mismatch = makeResponse();
 
     await handler(
@@ -361,9 +387,10 @@ test('payment package creation uses verified database columns and server-owned p
     );
 
     assert.equal(mismatch.statusCode, 400);
-    assert.equal(inserted.length, 1);
-    assert.equal(stkCalls, 1);
+    assert.equal(inserted.length, 2);
+    assert.equal(stkCalls, 2);
 
+    // Reject an unsupported package.
     const unsupported = makeResponse();
 
     await handler(
@@ -381,8 +408,8 @@ test('payment package creation uses verified database columns and server-owned p
 
     assert.equal(unsupported.statusCode, 400);
     assert.equal(unsupported.body.error, 'Unsupported package');
-    assert.equal(inserted.length, 1);
-    assert.equal(stkCalls, 1);
+    assert.equal(inserted.length, 2);
+    assert.equal(stkCalls, 2);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) {
