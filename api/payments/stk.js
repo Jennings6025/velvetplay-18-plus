@@ -15,6 +15,7 @@ const {
 } = require('../../lib/daraja');
 
 const PACKAGE_PRICES = Object.freeze({
+  15: 50,
   35: 100,
   50: 150,
   70: 200,
@@ -146,6 +147,7 @@ function createStkHandler({
         phone_number: normalizedPhone
       });
 
+      // Initiate the production STK Push request.
       const response = await fetchImpl(
         `${getDarajaBaseUrl('production')}/mpesa/stkpush/v1/processrequest`,
         {
