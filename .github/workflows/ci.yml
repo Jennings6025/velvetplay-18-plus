@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feat/supabase-postgres-integration
+      - refactor/velvetplay-quality-ux
   pull_request:
     branches:
       - main
