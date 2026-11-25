@@ -14,7 +14,10 @@ const {
   buildPassword
 } = require('../../lib/daraja');
 
+// Server-controlled package prices.
+// Never trust the amount submitted by the browser.
 const PACKAGE_PRICES = Object.freeze({
+  10: 30,
   15: 50,
   35: 100,
   50: 150,
@@ -138,6 +141,7 @@ function createStkHandler({
       paymentId = crypto.randomUUID();
 
       // Save the pending payment before requesting STK Push.
+      // The callback will use these stored values when confirming payment.
       await db.createPayment({
         id: paymentId,
         member_id: member.id,
