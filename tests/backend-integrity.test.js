@@ -219,7 +219,6 @@ test('wallet changes are routed only through atomic database RPCs', async () => 
 
 test('new guest sessions store a token hash and never return the raw token', async () => {
   const inserted = [];
-  const token = crypto.randomBytes(32).toString('base64url');
   const expiresAt = '2099-01-01T00:00:00.000Z';
 
   const db = {
@@ -308,8 +307,32 @@ test('payment package creation uses verified database columns and server-owned p
   });
 
   try {
-    // Verify the new KSh 50 / 15-minute package.
-    const smallestPackage = makeResponse();
+    // KSh 30 / 10 minutes.
+    const tenMinutePackage = makeResponse();
+
+    await handler(
+      {
+        method: 'POST',
+        cookies: { vp_session: 'opaque-session-token' },
+        body: {
+          phone: '0712345678',
+          amount: 30,
+          minutes: 10
+        }
+      },
+      tenMinutePackage
+    );
+
+    assert.equal(tenMinutePackage.statusCode, 200);
+    assert.equal(stkCalls, 1);
+    assert.equal(inserted.length, 1);
+    assert.equal(inserted[0].amount_kes, 30);
+    assert.equal(inserted[0].minutes, 10);
+    assert.equal(inserted[0].seconds_credited, 600);
+    assert.equal(inserted[0].phone_number, '254712345678');
+
+    // KSh 50 / 15 minutes.
+    const fifteenMinutePackage = makeResponse();
 
     await handler(
       {
@@ -321,18 +344,17 @@ test('payment package creation uses verified database columns and server-owned p
           minutes: 15
         }
       },
-      smallestPackage
+      fifteenMinutePackage
     );
 
-    assert.equal(smallestPackage.statusCode, 200);
-    assert.equal(stkCalls, 1);
-    assert.equal(inserted.length, 1);
-    assert.equal(inserted[0].amount_kes, 50);
-    assert.equal(inserted[0].minutes, 15);
-    assert.equal(inserted[0].seconds_credited, 900);
-    assert.equal(inserted[0].phone_number, '254712345678');
+    assert.equal(fifteenMinutePackage.statusCode, 200);
+    assert.equal(stkCalls, 2);
+    assert.equal(inserted.length, 2);
+    assert.equal(inserted[1].amount_kes, 50);
+    assert.equal(inserted[1].minutes, 15);
+    assert.equal(inserted[1].seconds_credited, 900);
 
-    // Verify the existing KSh 100 / 35-minute package still works.
+    // KSh 100 / 35 minutes.
     const existingPackage = makeResponse();
 
     await handler(
@@ -349,11 +371,11 @@ test('payment package creation uses verified database columns and server-owned p
     );
 
     assert.equal(existingPackage.statusCode, 200);
-    assert.equal(stkCalls, 2);
-    assert.equal(inserted.length, 2);
+    assert.equal(stkCalls, 3);
+    assert.equal(inserted.length, 3);
 
     assert.deepEqual(
-      Object.keys(inserted[1]).sort(),
+      Object.keys(inserted[2]).sort(),
       [
         'amount_kes',
         'id',
@@ -364,11 +386,11 @@ test('payment package creation uses verified database columns and server-owned p
       ].sort()
     );
 
-    assert.equal(inserted[1].amount_kes, 100);
-    assert.equal(inserted[1].minutes, 35);
-    assert.equal(inserted[1].phone_number, '254712345678');
-    assert.equal(inserted[1].seconds_credited, 2100);
-    assert.equal('session_id' in inserted[1], false);
+    assert.equal(inserted[2].amount_kes, 100);
+    assert.equal(inserted[2].minutes, 35);
+    assert.equal(inserted[2].phone_number, '254712345678');
+    assert.equal(inserted[2].seconds_credited, 2100);
+    assert.equal('session_id' in inserted[2], false);
 
     // Reject a price that does not match the selected package.
     const mismatch = makeResponse();
@@ -387,8 +409,8 @@ test('payment package creation uses verified database columns and server-owned p
     );
 
     assert.equal(mismatch.statusCode, 400);
-    assert.equal(inserted.length, 2);
-    assert.equal(stkCalls, 2);
+    assert.equal(inserted.length, 3);
+    assert.equal(stkCalls, 3);
 
     // Reject an unsupported package.
     const unsupported = makeResponse();
@@ -408,8 +430,8 @@ test('payment package creation uses verified database columns and server-owned p
 
     assert.equal(unsupported.statusCode, 400);
     assert.equal(unsupported.body.error, 'Unsupported package');
-    assert.equal(inserted.length, 2);
-    assert.equal(stkCalls, 2);
+    assert.equal(inserted.length, 3);
+    assert.equal(stkCalls, 3);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) {
