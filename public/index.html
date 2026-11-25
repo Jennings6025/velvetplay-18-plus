@@ -95,6 +95,7 @@ header{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-c
 .viewer-camera-controls button{border:1px solid #ffffff55;border-radius:20px;background:#100b16e8;color:#fff;font-size:10px;font-weight:700;padding:6px 8px}
 .viewer-camera-controls button:disabled{opacity:.5}
 .viewer-camera-message{position:absolute;inset:0;display:grid;place-items:center;padding:8px;text-align:center;font-size:10px;line-height:1.35;color:#eee;background:#17121d}
+.viewer-camera-message[hidden]{display:none}
 .viewer-camera-pip.camera-off video{display:none}
 @media(max-height:520px){.viewer-camera-pip{top:48px;width:90px}.viewer-camera-controls button{font-size:9px;padding:4px 6px}}
 /* Free promotional video */
@@ -546,8 +547,8 @@ const PROMO_WATCHED_KEY="velvetplay_free_promo_watched";
 
 
 const packages=[
-{minutes:10,price:30,hot:true},
-{minutes:15,price:50},
+{minutes:10,price:30},
+{minutes:15,price:50,hot:true},
 {minutes:35,price:100},
 {minutes:50,price:150},
 {minutes:70,price:200},
@@ -555,6 +556,7 @@ const packages=[
 {minutes:130,price:300},
 {minutes:160,price:350}
 ];
+
 let currentCreator=null,minutesBalance=0,balanceSeconds=0,memberName="Guest Member";
 let creatorVideoHistoryOpen=false;
 let currentPaymentId=null,paymentTimer=null,selectedPackage=null,selectedMethod="mpesa",paymentInProgress=false;
@@ -854,7 +856,7 @@ viewerCameraEnabled=false;
 const pip=document.getElementById("viewerCameraPip");
 if(pip)pip.classList.add("camera-off");
 const message=document.getElementById("viewerCameraMessage");
-if(message)message.textContent="Camera is off";
+if(message){message.hidden=false;message.textContent="Camera is off";}
 const toggle=document.getElementById("viewerCameraToggle");
 if(toggle)toggle.textContent="Camera on";
 const swap=document.getElementById("viewerCameraSwitch");
@@ -867,13 +869,14 @@ const message=document.getElementById("viewerCameraMessage");
 const toggle=document.getElementById("viewerCameraToggle");
 const swap=document.getElementById("viewerCameraSwitch");
 if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+message.hidden=false;
 message.textContent="Camera preview is not supported in this browser.";
 pip.classList.add("camera-off");
 return;
 }
 const request=++viewerCameraRequest;
 if(toggle)toggle.disabled=true;
-if(message)message.textContent="Requesting camera permission…";
+if(message){message.hidden=false;message.textContent="Requesting camera permission…";}
 try{
 const stream=await navigator.mediaDevices.getUserMedia({
 audio:false,
@@ -886,17 +889,35 @@ return;
 if(viewerCameraStream)viewerCameraStream.getTracks().forEach(track=>track.stop());
 viewerCameraStream=stream;
 const preview=document.getElementById("viewerCameraVideo");
+preview.autoplay=true;
+preview.muted=true;
+preview.playsInline=true;
 preview.srcObject=stream;
-await preview.play().catch(()=>{});
+// The message layer has an opaque background. Hide the whole layer, not just its text.
+if(message)message.hidden=true;
+await preview.play();
+// Confirm that the browser has received actual camera frames before reporting success.
+if(!preview.videoWidth||!preview.videoHeight){
+ await new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(new Error("Camera started but no video frames arrived.")),5000);
+  preview.addEventListener("loadeddata",()=>{clearTimeout(timeout);resolve();},{once:true});
+  preview.addEventListener("error",()=>{clearTimeout(timeout);reject(new Error("Camera preview could not be displayed."));},{once:true});
+ });
+}
+if(request!==viewerCameraRequest){stream.getTracks().forEach(track=>track.stop());return;}
 viewerCameraEnabled=true;
 pip.classList.remove("camera-off");
-if(message)message.textContent="";
+if(message)message.hidden=true;
 if(toggle)toggle.textContent="Camera off";
 if(swap)swap.disabled=false;
 }catch(error){
 if(request!==viewerCameraRequest)return;
+if(viewerCameraStream){viewerCameraStream.getTracks().forEach(track=>track.stop());viewerCameraStream=null;}
+const failedPreview=document.getElementById("viewerCameraVideo");
+if(failedPreview)failedPreview.srcObject=null;
+viewerCameraEnabled=false;
 pip.classList.add("camera-off");
-if(message)message.textContent=error&&error.name==="NotAllowedError"?"Camera permission denied. Creator video will continue.":"Camera unavailable. Creator video will continue.";
+if(message){message.hidden=false;message.textContent=error&&error.name==="NotAllowedError"?"Camera permission denied. Creator video will continue.":(error&&error.message?error.message:"Camera unavailable. Creator video will continue.");}
 if(toggle)toggle.textContent="Try camera";
 if(swap)swap.disabled=true;
 }finally{
