@@ -989,9 +989,23 @@ stopCreatorVideo(false);
 document.getElementById("callScreen").classList.remove("show");document.body.style.overflow="";
 }
 function finishCall(action){
-if(action==="answered"){openCreatorVideo().then(()=>{if(activeVideoSessionId&&document.getElementById("callScreen").classList.contains("watching"))startViewerCamera();});return;}
-const name=currentCreator?currentCreator.name:"Creator";closeCall();addActivity((action==="answered"?"Answered call · ":"Declined call · ")+name);
-showPage("packages");document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
+if(action==="answered"){
+/* Request the viewer camera directly from the Answer tap. On Android,
+   delaying getUserMedia until after network/video awaits can lose the
+   browser's user-activation permission window. */
+const key=currentCreator?creatorKey(currentCreator.name):"";
+const hasVideo=!!creatorVideoUrls[key];
+if(hasVideo&&availableViewingSeconds()>0){
+startViewerCamera();
+}
+openCreatorVideo();
+return;
+}
+const name=currentCreator?currentCreator.name:"Creator";
+closeCall();
+addActivity("Declined call · "+name);
+showPage("packages");
+document.getElementById("paymentMessage").textContent="Choose a minutes package to continue.";
 }
 
 async function openCreatorVideo(){
@@ -1003,19 +1017,22 @@ const video=document.getElementById("creatorVideo");
 const area=document.getElementById("callVideoArea");
 const status=document.getElementById("videoStatus");
 if(!url){
+stopViewerCamera();
 status.className="video-status error";
 status.textContent="This creator's video is not available yet.";
 area.classList.add("show");
 return;
 }
 if(availableViewingSeconds()<=0){
+stopViewerCamera();
 status.className="video-status error";
 status.textContent="Insufficient minutes — Buy Minutes";
 area.classList.add("show");
 return;
 }
-const previousSessionStopped=await stopCreatorVideo(false);
+const previousSessionStopped=await stopCreatorVideo(false,true);
 if(!previousSessionStopped){
+stopViewerCamera();
 status.className="video-status error";
 status.textContent="Could not finish syncing the previous video session. Try again.";
 area.classList.add("show");
@@ -1041,6 +1058,7 @@ video.src=url;creatorPlayer.reset();
 let session;
 try{session=await enqueueVideoEvent({action:"start",creator:currentCreator.name});}
 catch(error){
+stopViewerCamera();
 status.className="video-status error";
 status.textContent=(error&&error.message)||"Could not start the video. Tap play to try again.";
 creatorPlayer.needTap(true);return;
@@ -1115,8 +1133,8 @@ status.textContent="Playback stopped. No additional minutes will be used.";
 const video=document.getElementById("creatorVideo");
 if(video&&!video.paused)video.pause();
 }
-async function stopCreatorVideo(recordActivity=true){
-stopViewerCamera();
+async function stopCreatorVideo(recordActivity=true,keepViewerCamera=false){
+if(!keepViewerCamera)stopViewerCamera();
 const video=document.getElementById("creatorVideo");
 const sessionId=activeVideoSessionId||pendingVideoStopSessionId||pendingVideoSessionId;
 activeVideoSessionId=null;
